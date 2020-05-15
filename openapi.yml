@@ -1,0 +1,84 @@
+game.com/abc123
+game.com/api/game POST
+game.com/api/game/abc123 GET
+game.com/api/game/abc123/<mage | warrior | theif | cleric> PATCH
+game.com/api/game/abc123/mage/teleport POST
+(game.com/api/game/abc123/warrior/smash POST)
+(game.com/api/game/abc123/theif/disarm POST)
+game.com/api/game/abc123/cleric/heal POST
+(game.com/api/game/abc123/traps GET)
+game.com/api/game/abc123/locations GET
+game.com/api/game/abc123/obstacles GET
+game.com/api/game/abc123/obstacles/123 DELETE
+
+game
+{
+	id: <gameId>
+}
+
+player
+{
+	id: <playerName>
+}
+
+location
+{
+	id: <locationId>
+}
+
+path
+{
+	id: <pathId>,
+	from: <locationId>,
+	to: <locationId>
+}
+
+obstacle
+{
+	id: <obstacleId>,
+	type: <forcefield | lock | stone | ghost>
+	blockedPaths: [
+		<pathId>,
+		...
+	]
+}
+
+trap
+{
+	id: <trapId>,
+	location: <locationId>
+}
+
+character
+{
+	id: <mage | warrior | theif | cleric>,
+	location: <locationId | characterId>,
+	maxHealthTime: <time>,
+	healthTime: <time>,
+	hasWeapon: <boolean>,
+	abilityCooldown: <time>
+}
+
+teleport
+{
+	target: <characterId>,
+	to: <characterId>
+}
+
+smash
+{
+	targetLocation: <locationId>
+}
+
+disarm
+{
+	trap: <trapId>
+}
+
+heal
+{
+	targets [
+		<characterId>,
+		...
+	]
+}
