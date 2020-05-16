@@ -1,16 +1,3 @@
-game.com/abc123
-game.com/api/game POST
-game.com/api/game/abc123 GET
-game.com/api/game/abc123/<mage | warrior | theif | cleric> PATCH
-game.com/api/game/abc123/mage/teleport POST
-(game.com/api/game/abc123/warrior/smash POST)
-(game.com/api/game/abc123/theif/disarm POST)
-game.com/api/game/abc123/cleric/heal POST
-(game.com/api/game/abc123/traps GET)
-game.com/api/game/abc123/locations GET
-game.com/api/game/abc123/obstacles GET
-game.com/api/game/abc123/obstacles/123 DELETE
-
 game
 {
 	id: <gameId>
@@ -82,3 +69,105 @@ heal
 		...
 	]
 }
+
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: MAZE
+  description: MAZE API
+servers:
+  - url: http://maze.azurewebsites.net/api
+paths:
+  /game:
+    post:
+      operationId: createGame
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/game'
+  /game/{gameId}/characters:
+    get:
+      operationId: getCharacters
+      parameters:
+        - name: gameId
+          in: path
+      responses:
+        200:
+          description: Characters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Character'
+  /game/{gameId}/characters/{characterId}:
+    patch:
+      operationId: updateCharacter
+      parameters:
+        - name: gameId
+          in: path
+        - name: characterId
+          in: path
+        - name: JSONPatch
+          in: body
+          required: true
+          schema:
+            $ref: '#/components/schemas/PatchDocument'
+      responses:
+        200:
+          
+game.com/api/game/abc123/characters PATCH
+game.com/api/game/abc123/mage/teleport POST
+(game.com/api/game/abc123/warrior/smash POST)
+(game.com/api/game/abc123/theif/disarm POST)
+game.com/api/game/abc123/cleric/heal POST
+(game.com/api/game/abc123/traps GET)
+game.com/api/game/abc123/locations GET
+game.com/api/game/abc123/obstacles GET
+game.com/api/game/abc123/obstacles/123 DELETE
+
+components:
+  schemas:
+    PatchDocument:
+      type: array
+      items:
+        $ref: "#/definitions/PatchOperation"
+
+    PatchOperation: 
+      description: A JSONPatch operation as defined by RFC 6902 
+      required:
+        - "op"
+        - "path"
+      properties: 
+        op: 
+          type: string 
+          description: The operation to be performed 
+          enum:
+           - "add"
+           - "remove"
+           - "replace"
+           - "move"
+           - "copy"
+           - "test"
+        path: 
+          type: string 
+          description: A JSON-Pointer 
+        value: 
+          type: object 
+          description: The value to be used within the operations.
+        from: 
+          type: string 
+          description: A string containing a JSON Pointer value.
+
+    Game:
+      properties:
+        id:
+          type: string
+
+    Character:
+      properties:
+        id:
+          type: string
