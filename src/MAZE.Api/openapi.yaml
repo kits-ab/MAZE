@@ -10,7 +10,7 @@ paths:
     post:
       operationId: createGame
       responses:
-        200:
+        '200':
           description: Created game
           content:
             application/json:
@@ -21,13 +21,9 @@ paths:
     get:
       operationId: getCharacters
       parameters:
-        - name: gameId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/GameId'
+        - $ref: '#/components/parameters/GameId'
       responses:
-        200:
+        '200':
           description: Characters
           content:
             application/json:
@@ -40,11 +36,7 @@ paths:
     patch:
       operationId: updateCharacter
       parameters:
-        - name: gameId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/GameId'
+        - $ref: '#/components/parameters/GameId'
         - name: characterId
           in: path
           required: true
@@ -57,24 +49,127 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchDocument'
       responses:
-        200:
+        '200':
           description: Updated character
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Character'
 
-          
-#game.com/api/game/abc123/mage/teleport POST
-#(game.com/api/game/abc123/warrior/smash POST)
-#(game.com/api/game/abc123/theif/disarm POST)
-#game.com/api/game/abc123/cleric/heal POST
-#(game.com/api/game/abc123/traps GET)
-#game.com/api/game/abc123/locations GET
-#game.com/api/game/abc123/obstacles GET
-#game.com/api/game/abc123/obstacles/123 DELETE
+  /game/{gameId}/characters/mage/teleport:
+    post:
+      operationId: teleport
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Teleport'
+      responses:
+        '204':
+          description: Teleport successful
+
+  /game/{gameId}/characters/warrior/smash:
+    post:
+      operationId: smash
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Smash'
+      responses:
+        '204':
+          description: Smash successful
+
+  /game/{gameId}/characters/theif/disarm:
+    post:
+      operationId: disarm
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Disarm'
+      responses:
+        '204':
+          description: Disarm successful
+
+  /game/{gameId}/characters/cleric/heal:
+    post:
+      operationId: heal
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Heal'
+      responses:
+        '204':
+          description: Heal successful
+
+  /game/{gameId}/traps:
+    get:
+      operationId: getTraps
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Traps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trap'
+
+  /game/{gameId}/locations:
+    get:
+      operationId: getLocations
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+
+  /game/{gameId}/obstacles:
+    get:
+      operationId: getObstacles
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Obstacles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Obstacle'
 
 components:
+  parameters:
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/GameId'
+
   schemas:
     PatchDocument:
       type: array
@@ -116,6 +211,8 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/GameId'
+        isPaused:
+          type: boolean
 
     LocationId:
       description: A location identifier
@@ -138,8 +235,10 @@ components:
           $ref: '#/components/schemas/PathId'
         from:
           $ref: '#/components/schemas/LocationId'
+          readOnly: true
         to:
           $ref: '#/components/schemas/LocationId'
+          readOnly: true
 
     ObstacleId:
       description: An obstacle identifier
@@ -149,8 +248,7 @@ components:
     Obstacle:
       properties:
         id:
-          type: string
-          readOnly: true
+          $ref: '#/components/schemas/ObstacleId'
         type:
           type: string
           enum:
@@ -158,11 +256,13 @@ components:
             - lock
             - stone
             - ghost
+          readOnly: true
         blockedPaths:
           description: Paths which are blocked by the obstacle
           type: array
           items:
             $ref: '#/components/schemas/PathId'
+          readOnly: true
 
     TrapId:
       description: A trap identifier
@@ -175,10 +275,16 @@ components:
           $ref: '#/components/schemas/TrapId'
         location:
           $ref: '#/components/schemas/LocationId'
+          readOnly: true
 
     CharacterId:
       description: A character identifier
       type: string
+      enum:
+        - mage
+        - theif
+        - warrior
+        - cleric
       readOnly: true
 
     Character:
@@ -192,13 +298,16 @@ components:
           type: number
           format: float
           minimum: 0
+          readOnly: true
         hasWeapon:
           type: boolean
+          readOnly: true
         abilityCooldown:
           description: Number of seconds before ability can be used
           type: number
           format: float
           minimum: 0
+          readOnly: true
 
     Teleport:
       properties:
