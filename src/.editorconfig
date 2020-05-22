@@ -136,3 +136,6 @@ dotnet_diagnostic.SA1602.severity = none
 
 # SA1633: File should have header
 dotnet_diagnostic.SA1633.severity = none
+
+# SA0001: XML comments analysis is disabled due to project configuration
+dotnet_diagnostic.SA0001.severity = none
