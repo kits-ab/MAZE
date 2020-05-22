@@ -5,7 +5,12 @@ VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MAZE.Client", "MAZE.Client\MAZE.Client.csproj", "{1BD53D75-B7DE-4547-9F4F-11942DC2B7A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MAZE.Api", "MAZE.Api\MAZE.Api.csproj", "{2B964CBE-FA00-4FFA-8D41-4A4DC675CE89}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MAZE.Api", "MAZE.Api\MAZE.Api.csproj", "{2B964CBE-FA00-4FFA-8D41-4A4DC675CE89}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1289CD51-2763-4AF1-ACB2-30A500A3FAB1}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

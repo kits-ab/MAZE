@@ -4,7 +4,8 @@ info:
   title: MAZE
   description: MAZE API
 servers:
-  - url: http://maze.azurewebsites.net/api
+  - url: https://localhost:44396
+  - url: https://maze-api.azurewebsites.net
 paths:
   /game:
     post:
@@ -161,6 +162,21 @@ paths:
                 items:
                   $ref: '#/components/schemas/Obstacle'
 
+  /game/{gameId}/paths:
+    get:
+      operationId: getPaths
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Paths
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Path'
+
 components:
   parameters:
     GameId:
@@ -205,50 +221,67 @@ components:
     GameId:
       description: A game identifier
       type: string
-      readOnly: true
 
     Game:
       properties:
         id:
-          $ref: '#/components/schemas/GameId'
+          readOnly: true
+          allOf:
+           - $ref: '#/components/schemas/GameId'
         isPaused:
           type: boolean
 
     LocationId:
       description: A location identifier
-      type: string
-      readOnly: true
+      type: number
 
     Location:
       properties:
         id:
-          $ref: '#/components/schemas/LocationId'
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/LocationId'
 
     PathId:
       description: A path identifier
-      type: string
-      readOnly: true
+      type: number
 
     Path:
       properties:
         id:
-          $ref: '#/components/schemas/PathId'
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/PathId'
         from:
-          $ref: '#/components/schemas/LocationId'
           readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/LocationId'
         to:
-          $ref: '#/components/schemas/LocationId'
           readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/LocationId'
+        type:
+          readOnly: false
+          type: string
+          enum:
+            - West
+            - East
+            - North
+            - South
+            - Portal
+            - Slope
+
 
     ObstacleId:
       description: An obstacle identifier
-      type: string
-      readOnly: true
+      type: number
 
     Obstacle:
       properties:
         id:
-          $ref: '#/components/schemas/ObstacleId'
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/ObstacleId'
         type:
           type: string
           enum:
@@ -266,16 +299,18 @@ components:
 
     TrapId:
       description: A trap identifier
-      type: string
-      readOnly: true
+      type: number
 
     Trap:
       properties:
         id:
-          $ref: '#/components/schemas/TrapId'
-        location:
-          $ref: '#/components/schemas/LocationId'
           readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/TrapId'
+        location:
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/LocationId'
 
     CharacterId:
       description: A character identifier
@@ -285,14 +320,25 @@ components:
         - theif
         - warrior
         - cleric
-      readOnly: true
 
     Character:
       properties:
         id:
-          $ref: '#/components/schemas/CharacterId'
+          readOnly: true
+          allOf:
+             - $ref: '#/components/schemas/CharacterId'
+        startLocation:
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/LocationId'
+        path:
+          type: array
+          items:
+            $ref: '#/components/schemas/PathId'
         location:
-          $ref: '#/components/schemas/LocationId'
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/LocationId'
         health:
           description: Number of seconds left before dying
           type: number

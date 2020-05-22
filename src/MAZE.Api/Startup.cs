@@ -1,6 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -25,7 +27,17 @@ namespace MAZE.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+
+            services.AddTransient<LocationRepository>();
+            services.AddTransient<PathRepository>();
+
+            services.AddTransient<LocationService>();
+            services.AddTransient<PathService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -35,6 +47,11 @@ namespace MAZE.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/openapi", "MAZE API");
+            });
 
             app.UseHttpsRedirection();
 
