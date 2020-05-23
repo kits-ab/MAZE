@@ -269,8 +269,6 @@ components:
             - North
             - South
             - Portal
-            - Slope
-
 
     ObstacleId:
       description: An obstacle identifier

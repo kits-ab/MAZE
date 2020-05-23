@@ -33,9 +33,6 @@ namespace MAZE.Api
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
 
-            services.AddTransient<LocationRepository>();
-            services.AddTransient<PathRepository>();
-
             services.AddTransient<LocationService>();
             services.AddTransient<PathService>();
         }

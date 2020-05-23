@@ -17,7 +17,7 @@ namespace MAZE.Api.Controllers
         [HttpGet]
         public IActionResult Get(GameId gameId)
         {
-            return Ok(_pathService.GetDiscoveredPaths());
+            return Ok(_pathService.GetDiscoveredPaths(gameId));
         }
     }
 }

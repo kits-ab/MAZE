@@ -1,21 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using MAZE.Api.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using GameId = System.String;
+using Location = MAZE.Api.Contracts.Location;
 
 namespace MAZE.Api
 {
     public class LocationService
     {
-        private readonly LocationRepository _locationRepository;
+        private readonly GameService _gameService;
 
-        public LocationService(LocationRepository locationRepository)
+        public LocationService(GameService gameService)
         {
-            _locationRepository = locationRepository;
+            _gameService = gameService;
         }
 
-        public IEnumerable<Location> GetDiscoveredLocations()
+        public IEnumerable<Location> GetDiscoveredLocations(GameId gameId)
         {
-            return _locationRepository.GetDiscoveredLocations();
+            return _gameService.GetGame(gameId).World.Locations
+                .Where(location => location.IsDiscovered)
+                .Select(Convert);
+        }
+
+        private static Location Convert(Models.Location location)
+        {
+            return new Location(location.Id);
         }
     }
 }
