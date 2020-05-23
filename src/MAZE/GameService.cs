@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using GenericDataStructures;
 using MAZE.Events;
 using MAZE.Models;
 using GameId = System.String;
@@ -8,31 +9,46 @@ namespace MAZE
 {
     public class GameService
     {
-        private readonly EventRepository _eventService;
+        private static int _gameCounter = 0;
 
-        public GameService(EventRepository eventService)
+        private readonly EventRepository _eventRepository;
+
+        public GameService(EventRepository eventRepository)
         {
-            _eventService = eventService;
+            _eventRepository = eventRepository;
         }
 
         public GameId CreateGame(World world)
         {
-            var newGameId = Guid.NewGuid().ToString();
+            var newGameId = _gameCounter.ToString();
+            _gameCounter++;
 
             var gameCreatedEvent = new GameCreated(world);
 
-            _eventService.AddEvent(newGameId, gameCreatedEvent);
+            _eventRepository.AddEvent(newGameId, gameCreatedEvent);
 
             return newGameId;
         }
 
-        public Game GetGame(GameId id)
+        public Result<Game, ReadGameError> GetGame(GameId id)
         {
-            var gameEvents = _eventService.GetEvents(id);
+            var result = _eventRepository.GetEvents(id);
 
-            var gameCreatedEvent = gameEvents.First();
+            return result.Map<Result<Game, ReadGameError>>(
+                gameEvents =>
+                {
+                    var gameCreatedEvent = gameEvents.First();
 
-            return new Game(id, gameCreatedEvent.World);
+                    return new Game(id, gameCreatedEvent.World);
+                },
+                readEventsError =>
+                {
+                    return readEventsError switch
+                    {
+                        ReadEventsError.GameNotFound => ReadGameError.NotFound,
+                        _ => throw new ArgumentOutOfRangeException(nameof(readEventsError), readEventsError, null)
+                    };
+                });
         }
     }
 }

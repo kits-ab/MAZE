@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using GameId = System.String;
 
 namespace MAZE.Api.Controllers
 {
-    [Route("game/{gameId}/[controller]")]
+    [Route("games/{gameId}/[controller]")]
     [ApiController]
     public class LocationsController : ControllerBase
     {
@@ -17,7 +18,18 @@ namespace MAZE.Api.Controllers
         [HttpGet]
         public IActionResult Get(GameId gameId)
         {
-            return Ok(_locationsService.GetDiscoveredLocations(gameId));
+            var result = _locationsService.GetDiscoveredLocations(gameId);
+
+            return result.Map<IActionResult>(
+                Ok,
+                readGameError =>
+                {
+                    return readGameError switch
+                    {
+                        ReadGameError.NotFound => NotFound("Game not found"),
+                        _ => throw new ArgumentOutOfRangeException(nameof(readGameError), readGameError, null)
+                    };
+                });
         }
     }
 }

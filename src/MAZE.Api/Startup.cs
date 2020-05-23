@@ -28,10 +28,14 @@ namespace MAZE.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers()
-                .AddJsonOptions(options =>
+                .AddNewtonsoftJson(options =>
                 {
-                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 });
+
+            services.AddTransient<WorldSerializer>();
+            services.AddSingleton<EventRepository>();
+            services.AddTransient<GameService>();
 
             services.AddTransient<LocationService>();
             services.AddTransient<PathService>();

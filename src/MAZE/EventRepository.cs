@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GenericDataStructures;
 using MAZE.Events;
 using GameId = System.String;
 
@@ -8,8 +9,13 @@ namespace MAZE
     {
         private readonly Dictionary<GameId, List<GameCreated>> _events = new Dictionary<GameId, List<GameCreated>>();
 
-        public IEnumerable<GameCreated> GetEvents(GameId gameId)
+        public Result<IEnumerable<GameCreated>, ReadEventsError> GetEvents(GameId gameId)
         {
+            if (!_events.ContainsKey(gameId))
+            {
+                return ReadEventsError.GameNotFound;
+            }
+
             return _events[gameId];
         }
 

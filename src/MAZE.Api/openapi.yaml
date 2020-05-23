@@ -7,18 +7,26 @@ servers:
   - url: https://localhost:44396
   - url: https://maze-api.azurewebsites.net
 paths:
-  /game:
+  /games:
     post:
       operationId: createGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Game'
       responses:
-        '200':
+        '201':
           description: Created game
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/game'
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: World not found
 
-  /game/{gameId}/characters:
+  /games/{gameId}/characters:
     get:
       operationId: getCharacters
       parameters:
@@ -32,8 +40,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Character'
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/characters/{characterId}:
+  /games/{gameId}/characters/{characterId}:
     patch:
       operationId: updateCharacter
       parameters:
@@ -56,8 +66,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Character'
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/characters/mage/teleport:
+  /games/{gameId}/characters/mage/teleport:
     post:
       operationId: teleport
       parameters:
@@ -71,8 +83,10 @@ paths:
       responses:
         '204':
           description: Teleport successful
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/characters/warrior/smash:
+  /games/{gameId}/characters/warrior/smash:
     post:
       operationId: smash
       parameters:
@@ -86,8 +100,10 @@ paths:
       responses:
         '204':
           description: Smash successful
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/characters/theif/disarm:
+  /games/{gameId}/characters/theif/disarm:
     post:
       operationId: disarm
       parameters:
@@ -101,8 +117,10 @@ paths:
       responses:
         '204':
           description: Disarm successful
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/characters/cleric/heal:
+  /games/{gameId}/characters/cleric/heal:
     post:
       operationId: heal
       parameters:
@@ -116,8 +134,10 @@ paths:
       responses:
         '204':
           description: Heal successful
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/traps:
+  /games/{gameId}/traps:
     get:
       operationId: getTraps
       parameters:
@@ -131,8 +151,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Trap'
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/locations:
+  /games/{gameId}/locations:
     get:
       operationId: getLocations
       parameters:
@@ -146,8 +168,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Location'
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/obstacles:
+  /games/{gameId}/obstacles:
     get:
       operationId: getObstacles
       parameters:
@@ -161,8 +185,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Obstacle'
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
-  /game/{gameId}/paths:
+  /games/{gameId}/paths:
     get:
       operationId: getPaths
       parameters:
@@ -176,16 +202,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Path'
+        '404':
+          $ref: '#/components/responses/GameNotFound'
 
 components:
-  parameters:
-    GameId:
-      name: gameId
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/GameId'
-
   schemas:
     PatchDocument:
       type: array
@@ -221,6 +241,7 @@ components:
     GameId:
       description: A game identifier
       type: string
+      example: "0"
 
     Game:
       properties:
@@ -230,6 +251,15 @@ components:
            - $ref: '#/components/schemas/GameId'
         isPaused:
           type: boolean
+          default: true
+        world:
+          $ref: '#/components/schemas/WorldId'
+        
+    WorldId:
+      description: A world identifier
+      type: string
+      pattern: '^[a-zA-Z]+$'
+      example: Castle
 
     LocationId:
       description: A location identifier
@@ -376,3 +406,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CharacterId'
+
+  parameters:
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/GameId'
+
+  responses:
+    GameNotFound:
+      description: Game not found
+      content:
+        application/json:
+          example: '"Game not found"'

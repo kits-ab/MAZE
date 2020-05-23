@@ -1,33 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GenericDataStructures;
 using MAZE.Api.Contracts;
 using GameId = System.String;
-using Path = MAZE.Api.Contracts.Path;
 
 namespace MAZE.Api
 {
     public class PathService
     {
         private readonly GameService _gameService;
-        private readonly PathRepository _pathRepository;
 
-        public PathService(GameService gameService, PathRepository pathRepository)
+        public PathService(GameService gameService)
         {
             _gameService = gameService;
-            _pathRepository = pathRepository;
         }
 
-        public IEnumerable<Path> GetDiscoveredPaths(GameId gameId)
+        public Result<IEnumerable<Path>, ReadGameError> GetDiscoveredPaths(GameId gameId)
         {
-            var gameWorld = _gameService.GetGame(gameId).World;
+            var result = _gameService.GetGame(gameId);
 
-            var discoveredLocationIds = gameWorld.Locations
+            return result.Map(
+                game =>
+                {
+                    var visiblePaths = GetVisiblePaths(game);
+
+                    return new Result<IEnumerable<Path>, ReadGameError>(visiblePaths);
+                },
+                readGameError => readGameError);
+        }
+
+        private static IEnumerable<Path> GetVisiblePaths(Models.Game game)
+        {
+            var discoveredLocationIds = game.World.Locations
                 .Where(location => location.IsDiscovered)
                 .Select(location => location.Id)
                 .ToHashSet();
 
-            return gameWorld.Paths
+            return game.World.Paths
                 .Where(path =>
                     discoveredLocationIds.Contains(path.From) || discoveredLocationIds.Contains(path.To))
                 .Select(Convert);
