@@ -10,7 +10,7 @@ namespace MAZE.Api
     public class WorldSerializer
     {
         private readonly int _locationColor = Color.White.ToArgb();
-        private readonly int _pathColor = Color.White.ToArgb();
+        private readonly int _pathColor = Color.FromArgb(255, 200, 200, 200).ToArgb();
 
         public World Deserialize(WorldId worldId, Stream worldStream)
         {
