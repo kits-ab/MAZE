@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as d3 from 'd3';
+import { GameService, ITile } from '../game.service';
 
 @Component({
   selector: 'app-game',
@@ -7,31 +8,28 @@ import * as d3 from 'd3';
   styleUrls: ['./game.component.scss']
 })
 export class GameComponent implements OnInit {
-  private static readonly tileSize = 32;
+  
 
-  ngOnInit() {
-    const tiles: ITile[] = [
-      { x: 0, y: 0, image: '/assets/castle/left.png' },
-      { x: 0, y: GameComponent.tileSize, image: '/assets/castle/left.png' }
-    ];
-
-    const svg = d3.select('svg');
-    svg
-      .selectAll('image')
-      .data<ITile>(tiles)
-      .enter()
-      .append('image')
-      .attr('x', location => location.x)
-      .attr('y', location => location.y)
-      .attr('width', GameComponent.tileSize)
-      .attr('height', GameComponent.tileSize)
-      .attr('href', location => location.image);
+  constructor(readonly gameService: GameService) {
   }
 
+  ngOnInit() {
+    const tiles$ = this.gameService.getTiles('0');
+    tiles$.subscribe(tiles => {
+      d3
+        .select('svg')
+        .selectAll<SVGImageElement, ITile>('image')
+        .data<ITile>(tiles, tile => tile.locationId.toString())
+        .enter()
+        .append('image')
+        .attr('x', location => location.x)
+        .attr('y', location => location.y)
+        .attr('width', GameService.tileSize)
+        .attr('height', GameService.tileSize)
+        .attr('href', location => location.image)
+        .exit()
+        .remove();
+    });
+  }
 }
 
-export interface ITile {
-  x: number;
-  y: number;
-  image: string;
-}
