@@ -1,3 +1,0 @@
-npx openapi-generator generate -i MAZE.Specification/openapi.yaml -g typescript-angular -o ./MAZE.AngularClient/ --additional-properties=npmName=maze-client-angular,ngVersion=8.0.0
-
-Then follow instructions in generated README.md to build and publish.

@@ -11,7 +11,7 @@ namespace MAZE.Api.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            var openApiStream = new FileStream("openapi.yaml", FileMode.Open);
+            var openApiStream = new FileStream("../MAZE.Specification/openapi.yaml", FileMode.Open);
             return File(openApiStream, "application/octet-stream", "openapi.yaml");
         }
     }

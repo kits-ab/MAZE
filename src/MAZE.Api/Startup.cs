@@ -1,24 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace MAZE.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IHostEnvironment _environment;
+
+        public Startup(IConfiguration configuration, IHostEnvironment environment)
         {
+            _environment = environment;
             Configuration = configuration;
         }
 
@@ -33,10 +27,18 @@ namespace MAZE.Api
                     options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 });
 
+#if DEBUG
+            if (_environment.IsDevelopment())
+            {
+                services.AddHostedService<AutomaticGameCreator>();
+            }
+#endif
+
             services.AddTransient<WorldSerializer>();
             services.AddSingleton<EventRepository>();
-            services.AddTransient<GameService>();
+            services.AddSingleton<GameRepository>();
 
+            services.AddTransient<GameService>();
             services.AddTransient<LocationService>();
             services.AddTransient<PathService>();
         }
@@ -48,6 +50,11 @@ namespace MAZE.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors(options =>
+            {
+                options.AllowAnyOrigin();
+            });
 
             app.UseSwaggerUI(options =>
             {

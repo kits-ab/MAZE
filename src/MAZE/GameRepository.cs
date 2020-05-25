@@ -7,13 +7,13 @@ using GameId = System.String;
 
 namespace MAZE
 {
-    public class GameService
+    public class GameRepository
     {
         private static int _gameCounter = 0;
 
         private readonly EventRepository _eventRepository;
 
-        public GameService(EventRepository eventRepository)
+        public GameRepository(EventRepository eventRepository)
         {
             _eventRepository = eventRepository;
         }

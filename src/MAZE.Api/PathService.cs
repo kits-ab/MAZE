@@ -9,9 +9,9 @@ namespace MAZE.Api
 {
     public class PathService
     {
-        private readonly GameService _gameService;
+        private readonly GameRepository _gameService;
 
-        public PathService(GameService gameService)
+        public PathService(GameRepository gameService)
         {
             _gameService = gameService;
         }

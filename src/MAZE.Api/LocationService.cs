@@ -8,16 +8,16 @@ namespace MAZE.Api
 {
     public class LocationService
     {
-        private readonly GameService _gameService;
+        private readonly GameRepository _gameRepository;
 
-        public LocationService(GameService gameService)
+        public LocationService(GameRepository gameRepository)
         {
-            _gameService = gameService;
+            _gameRepository = gameRepository;
         }
 
         public Result<IEnumerable<Location>, ReadGameError> GetDiscoveredLocations(GameId gameId)
         {
-            var result = _gameService.GetGame(gameId);
+            var result = _gameRepository.GetGame(gameId);
 
             return result.Map(
                 game =>

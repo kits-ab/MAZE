@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, from } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { GamesService, Location } from 'maze-client-angular';
 
 @Injectable({
   providedIn: 'root'
@@ -7,11 +9,17 @@ import { Observable, from } from 'rxjs';
 export class GameService {
   static readonly tileSize = 32;
 
+  constructor(private readonly gamesApi: GamesService) {
+  }
+
   getTiles(gameId: GameId): Observable<ITile[]> {
-    return from([[
-      { locationId: 0, x: 0, y: 0, image: '/assets/castle/left.png' },
-      { locationId: 1, x: 0, y: GameService.tileSize, image: '/assets/castle/left.png' }
-    ]]);
+    return this.gamesApi.getLocations(gameId).pipe(map(locations => {
+      return locations.map(this.convert);
+    }));
+  }
+
+  private convert(location: Location): ITile {
+    return { locationId: location.id, x: 0, y: location.id * GameService.tileSize, image: '/assets/castle/left.png' };
   }
 }
 
