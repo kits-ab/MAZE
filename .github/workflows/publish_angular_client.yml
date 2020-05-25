@@ -21,7 +21,7 @@ jobs:
         working-directory: temp
       - run: npm run build
         working-directory: temp
-      - run: npm publish dist
+      - run: npm publish dist --access public
         working-directory: temp
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
