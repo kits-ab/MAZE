@@ -7,22 +7,7 @@ on:
     - 'src/MAZE.Specification/**'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 12
-      - run: npm install @openapitools/openapi-generator-cli
-      - run: npx openapi-generator generate -i src/MAZE.Specification/openapi.yaml -g typescript-angular -o temp --additional-properties=npmName=maze-client-angular,ngVersion=8.0.0
-      - run: npm install
-        working-directory: temp
-      - run: npm run build
-        working-directory: temp
-
-  publish-npm:
-    needs: build
+  generate-and-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,6 +15,12 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
+      - run: npm install @openapitools/openapi-generator-cli
+      - run: npx openapi-generator generate -i src/MAZE.Specification/openapi.yaml -g typescript-angular -o temp --additional-properties=npmName=maze-client-angular,ngVersion=8.0.0
+      - run: npm install
+        working-directory: temp
+      - run: npm run build
+        working-directory: temp
       - run: npm publish dist
         working-directory: temp
         env:
