@@ -10,6 +10,8 @@ paths:
   /games:
     post:
       operationId: createGame
+      tags:
+        - games
       requestBody:
         required: true
         content:
@@ -29,6 +31,8 @@ paths:
   /games/{gameId}/characters:
     get:
       operationId: getCharacters
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
@@ -46,6 +50,8 @@ paths:
   /games/{gameId}/characters/{characterId}:
     patch:
       operationId: updateCharacter
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
         - name: characterId
@@ -72,6 +78,8 @@ paths:
   /games/{gameId}/characters/mage/teleport:
     post:
       operationId: teleport
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       requestBody:
@@ -89,6 +97,8 @@ paths:
   /games/{gameId}/characters/warrior/smash:
     post:
       operationId: smash
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       requestBody:
@@ -106,6 +116,8 @@ paths:
   /games/{gameId}/characters/theif/disarm:
     post:
       operationId: disarm
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       requestBody:
@@ -123,6 +135,8 @@ paths:
   /games/{gameId}/characters/cleric/heal:
     post:
       operationId: heal
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       requestBody:
@@ -140,6 +154,8 @@ paths:
   /games/{gameId}/traps:
     get:
       operationId: getTraps
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
@@ -157,6 +173,8 @@ paths:
   /games/{gameId}/locations:
     get:
       operationId: getLocations
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
@@ -174,6 +192,8 @@ paths:
   /games/{gameId}/obstacles:
     get:
       operationId: getObstacles
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
@@ -191,6 +211,8 @@ paths:
   /games/{gameId}/paths:
     get:
       operationId: getPaths
+      tags:
+        - games
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
