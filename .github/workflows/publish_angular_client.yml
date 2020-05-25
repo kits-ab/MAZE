@@ -1,0 +1,35 @@
+name: Generate and publish NPM package from OpenAPI
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - 'src/MAZE.Specification/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: npm install @openapitools/openapi-generator-cli
+      - run: npx openapi-generator generate -i src/MAZE.Specification/openapi.yaml -g typescript-angular -o ./temp/ --additional-properties=npmName=maze-client-angular,ngVersion=8.0.0
+      - run: cd ./temp/
+      - run: npm ci
+      - run: npm run build
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - run: cd ./temp/
+      - run: npm publish dist
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
