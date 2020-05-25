@@ -1,11 +1,14 @@
 openapi: "3.0.3"
+
 info:
   version: 1.0.0
   title: MAZE
   description: MAZE API
+
 servers:
   - url: https://localhost:44396
   - url: https://maze-api.azurewebsites.net
+
 paths:
   /games:
     post:
