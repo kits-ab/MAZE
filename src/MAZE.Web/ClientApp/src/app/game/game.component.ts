@@ -14,12 +14,13 @@ export class GameComponent implements OnInit {
   }
 
   ngOnInit() {
-    const tiles$ = this.gameService.getTiles('0');
-    tiles$.subscribe(tiles => {
+    const world$ = this.gameService.getWorld('0');
+    world$.subscribe(world => {
       d3
         .select('svg')
+        .attr('viewBox', `${world.x} ${world.y} ${world.width} ${world.height}`)
         .selectAll<SVGImageElement, ITile>('image')
-        .data<ITile>(tiles, tile => tile.locationId.toString())
+        .data<ITile>(world.tiles, tile => tile.locationId.toString())
         .enter()
         .append('image')
         .attr('x', tile => tile.x)

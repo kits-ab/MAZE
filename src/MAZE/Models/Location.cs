@@ -4,14 +4,13 @@ namespace MAZE.Models
 {
     public class Location
     {
-        public Location(LocationId id, bool isDiscovered)
+        public Location(LocationId id)
         {
             Id = id;
-            IsDiscovered = isDiscovered;
         }
 
         public LocationId Id { get; }
 
-        public bool IsDiscovered { get; }
+        public bool IsDiscovered { get; set; }
     }
 }

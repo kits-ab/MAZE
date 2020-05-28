@@ -2,9 +2,9 @@
 
 namespace MAZE.Events
 {
-    public class GameCreated
+    public class WorldCreated
     {
-        public GameCreated(World world)
+        public WorldCreated(World world)
         {
             World = world;
         }

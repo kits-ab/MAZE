@@ -7,9 +7,9 @@ namespace MAZE
 {
     public class EventRepository
     {
-        private readonly Dictionary<GameId, List<GameCreated>> _events = new Dictionary<GameId, List<GameCreated>>();
+        private readonly Dictionary<GameId, List<Union<WorldCreated, CharacterAdded>>> _events = new Dictionary<GameId, List<Union<WorldCreated, CharacterAdded>>>();
 
-        public Result<IEnumerable<GameCreated>, ReadEventsError> GetEvents(GameId gameId)
+        public Result<IEnumerable<Union<WorldCreated, CharacterAdded>>, ReadEventsError> GetEvents(GameId gameId)
         {
             if (!_events.ContainsKey(gameId))
             {
@@ -19,11 +19,11 @@ namespace MAZE
             return _events[gameId];
         }
 
-        public void AddEvent(GameId gameId, GameCreated @event)
+        public void AddEvent(GameId gameId, Union<WorldCreated, CharacterAdded> @event)
         {
             if (!_events.ContainsKey(gameId))
             {
-                _events.Add(gameId, new List<GameCreated>());
+                _events.Add(gameId, new List<Union<WorldCreated, CharacterAdded>>());
             }
 
             _events[gameId].Add(@event);

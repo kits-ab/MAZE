@@ -13,10 +13,11 @@ export class GameService {
   constructor(private readonly gamesApi: GamesService) {
   }
 
-  getTiles(gameId: GameId): Observable<ITile[]> {
+  getWorld(gameId: GameId): Observable<IWorld> {
     const locations$ = this.gamesApi.getLocations(gameId);
     const paths$ = this.gamesApi.getPaths(gameId);
-    return combineLatest(locations$, paths$).pipe(map(([locations, paths]) => this.buildWorld(locations, paths)));
+    const tiles$ = combineLatest(locations$, paths$).pipe(map(([locations, paths]) => this.buildWorld(locations, paths)));
+    return tiles$.pipe(map(tiles => this.createWorld(tiles)));
   }
 
   private buildWorld(locations: Location[], paths: Path[]): ITile[] {
@@ -52,9 +53,10 @@ export class GameService {
         }
 
         const location = locationData.get(path.from);
-        const connectedLocation = locationData.get(path.to);
+        if (location != null) {
+          const connectedLocation = locationData.get(path.to);
 
-        switch (path.type) {
+          switch (path.type) {
           case 'West':
             location.hasPathWest = true;
             location.locationWest = connectedLocation;
@@ -74,6 +76,7 @@ export class GameService {
             location.hasPathSouth = true;
             location.locationSouth = connectedLocation;
             break;
+          }
         }
       }
     });
@@ -249,33 +252,53 @@ export class GameService {
     const parentLocation = locationData.get(parentLocationId);
     location.visited = true;
     switch (directionFromParent) {
-      case Path.TypeEnum.West:
-        location.x = parentLocation.x - GameService.tileSize;
-        location.y = parentLocation.y;
-        break;
+    case Path.TypeEnum.West:
+      location.x = parentLocation.x - GameService.tileSize;
+      location.y = parentLocation.y;
+      break;
 
-      case Path.TypeEnum.East:
-        location.x = parentLocation.x + GameService.tileSize;
-        location.y = parentLocation.y;
-        break;
+    case Path.TypeEnum.East:
+      location.x = parentLocation.x + GameService.tileSize;
+      location.y = parentLocation.y;
+      break;
 
-      case Path.TypeEnum.North:
-        location.x = parentLocation.x;
-        location.y = parentLocation.y - GameService.tileSize;
-        break;
+    case Path.TypeEnum.North:
+      location.x = parentLocation.x;
+      location.y = parentLocation.y - GameService.tileSize;
+      break;
 
-      case Path.TypeEnum.South:
-        location.x = parentLocation.x;
-        location.y = parentLocation.y + GameService.tileSize;
-        break;
+    case Path.TypeEnum.South:
+      location.x = parentLocation.x;
+      location.y = parentLocation.y + GameService.tileSize;
+      break;
     }
 
     const pathConnection = pathConnections.get(locationId);
     pathConnection.forEach(([neighborLocationId, directionFromParent]) => {
-      if (!locationData.get(neighborLocationId).visited) {
+      const neighborLocation = locationData.get(neighborLocationId);
+      if (neighborLocation != null && !neighborLocation.visited) {
         this.traversePaths(neighborLocationId, locationId, directionFromParent, locationData, pathConnections);
       }
     });
+}
+
+  private createWorld(tiles: ITile[]): IWorld {
+    const leftValues = tiles.map(tile => tile.x);
+    const rightValues = tiles.map(tile => tile.x + tile.width);
+    const topValues = tiles.map(tile => tile.y);
+    const bottomValues = tiles.map(tile => tile.y + tile.height);
+    const minX = Math.min(...leftValues);
+    const minY = Math.min(...topValues);
+    const maxX = Math.max(...rightValues);
+    const maxY = Math.max(...bottomValues);
+
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+      tiles: tiles
+    }
   }
 }
 
@@ -304,6 +327,8 @@ interface ILocationData {
 }
 
 export interface IWorld {
+  x: number;
+  y: number;
   width: number;
   height: number;
   tiles: ITile[];

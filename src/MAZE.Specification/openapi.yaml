@@ -78,13 +78,14 @@ paths:
         '404':
           $ref: '#/components/responses/GameNotFound'
 
-  /games/{gameId}/characters/mage/teleport:
+  /games/{gameId}/characters/{characterId}/teleport:
     post:
       operationId: teleport
       tags:
         - games
       parameters:
         - $ref: '#/components/parameters/GameId'
+        - $ref: '#/components/parameters/CharacterId'
       requestBody:
         required: true
         content:
@@ -97,13 +98,14 @@ paths:
         '404':
           $ref: '#/components/responses/GameNotFound'
 
-  /games/{gameId}/characters/warrior/smash:
+  /games/{gameId}/characters/{characterId}/smash:
     post:
       operationId: smash
       tags:
         - games
       parameters:
         - $ref: '#/components/parameters/GameId'
+        - $ref: '#/components/parameters/CharacterId'
       requestBody:
         required: true
         content:
@@ -116,13 +118,14 @@ paths:
         '404':
           $ref: '#/components/responses/GameNotFound'
 
-  /games/{gameId}/characters/theif/disarm:
+  /games/{gameId}/characters/{characterId}/disarm:
     post:
       operationId: disarm
       tags:
         - games
       parameters:
         - $ref: '#/components/parameters/GameId'
+        - $ref: '#/components/parameters/CharacterId'
       requestBody:
         required: true
         content:
@@ -135,13 +138,14 @@ paths:
         '404':
           $ref: '#/components/responses/GameNotFound'
 
-  /games/{gameId}/characters/cleric/heal:
+  /games/{gameId}/characters/{characterId}/heal:
     post:
       operationId: heal
       tags:
         - games
       parameters:
         - $ref: '#/components/parameters/GameId'
+        - $ref: '#/components/parameters/CharacterId'
       requestBody:
         required: true
         content:
@@ -338,7 +342,7 @@ components:
         type:
           type: string
           enum:
-            - forcefield
+            - forceField
             - lock
             - stone
             - ghost
@@ -367,6 +371,10 @@ components:
 
     CharacterId:
       description: A character identifier
+      type: number
+
+    CharacterClass:
+      description: The class of a character
       type: string
       enum:
         - mage
@@ -380,6 +388,10 @@ components:
           readOnly: true
           allOf:
              - $ref: '#/components/schemas/CharacterId'
+        class:
+          readOnly: true
+          allOf:
+             - $ref: '#/components/schemas/CharacterClass'
         startLocation:
           readOnly: true
           allOf:
@@ -439,6 +451,13 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/GameId'
+
+    CharacterId:
+      name: characterId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/CharacterId'
 
   responses:
     GameNotFound:

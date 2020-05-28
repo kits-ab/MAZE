@@ -18,14 +18,10 @@ namespace MAZE
             _eventRepository = eventRepository;
         }
 
-        public GameId CreateGame(World world)
+        public GameId CreateGame()
         {
             var newGameId = _gameCounter.ToString();
             _gameCounter++;
-
-            var gameCreatedEvent = new GameCreated(world);
-
-            _eventRepository.AddEvent(newGameId, gameCreatedEvent);
 
             return newGameId;
         }
@@ -35,11 +31,26 @@ namespace MAZE
             var result = _eventRepository.GetEvents(id);
 
             return result.Map<Result<Game, ReadGameError>>(
-                gameEvents =>
+                gameEventsToRead =>
                 {
-                    var gameCreatedEvent = gameEvents.First();
+                    var gameEvents = gameEventsToRead.ToList();
+                    var worldCreatedEvent = gameEvents.First();
+                    var world = worldCreatedEvent.Map(
+                        worldCreated => worldCreated.World,
+                        _ => throw new InvalidOperationException("First event should be world creation"));
 
-                    return new Game(id, gameCreatedEvent.World);
+                    foreach (var @event in gameEvents.Skip(1))
+                    {
+                        @event.Switch(
+                            _ => throw new InvalidOperationException("Cannot created world more than once"),
+                            characterAdded =>
+                            {
+                                world.Characters.Add(characterAdded.Character);
+                                world.DiscoverLocation(characterAdded.Character.LocationId);
+                            });
+                    }
+
+                    return new Game(id, world);
                 },
                 readEventsError =>
                 {
