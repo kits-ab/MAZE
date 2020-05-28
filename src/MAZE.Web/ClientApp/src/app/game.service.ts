@@ -7,8 +7,8 @@ import { map } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class GameService {
-  private static readonly tileSize = 32;
-  private static readonly wallsPerTile = 4;
+  private static readonly tileSize = 30;
+  private static readonly wallsPerTile = 6;
 
   constructor(private readonly gamesApi: GamesService) {
   }
@@ -21,7 +21,22 @@ export class GameService {
 
   private buildWorld(locations: Location[], paths: Path[]): ITile[] {
     const originLocationId = locations[0].id;
-    const locationData = new Map<LocationId, ILocationData>(locations.map<[LocationId, ILocationData]>(location => [location.id, { locationId: location.id, x: undefined, y: undefined, visited: false, hasPathWest: false, hasPathEast: false, hasPathNorth: false, hasPathSouth: false}]));
+    const locationData = new Map<LocationId, ILocationData>(locations.map<[LocationId, ILocationData]>(location => [
+      location.id,
+      {
+        locationId: location.id,
+        x: undefined,
+        y: undefined,
+        visited: false,
+        hasPathWest: false,
+        locationWest: undefined,
+        hasPathEast: false,
+        locationEast: undefined,
+        hasPathNorth: false,
+        locationNorth: undefined,
+        hasPathSouth: false,
+        locationSouth: undefined
+      }]));
     const originLocationPosition = locationData.get(originLocationId);
     originLocationPosition.x = 0;
     originLocationPosition.y = 0;
@@ -37,22 +52,27 @@ export class GameService {
         }
 
         const location = locationData.get(path.from);
+        const connectedLocation = locationData.get(path.to);
 
         switch (path.type) {
           case 'West':
             location.hasPathWest = true;
+            location.locationWest = connectedLocation;
             break;
 
           case 'East':
             location.hasPathEast = true;
+            location.locationEast = connectedLocation;
             break;
 
           case 'North':
             location.hasPathNorth = true;
+            location.locationNorth = connectedLocation;
             break;
 
           case 'South':
             location.hasPathSouth = true;
+            location.locationSouth = connectedLocation;
             break;
         }
       }
@@ -76,8 +96,56 @@ export class GameService {
         image: '/assets/castle/Floor.png'
       });
 
+      const hasInnerCornerRightBottom = !location.hasPathWest && !location.hasPathNorth;
+      if (hasInnerCornerRightBottom) {
+        tiles.push({
+          locationId: location.locationId,
+          x: location.x,
+          y: location.y,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          image: '/assets/castle/InnerCornerRightBottom.png'
+        });
+      }
+
+      const hasInnerCornerLeftBottom = !location.hasPathEast && !location.hasPathNorth;
+      if (hasInnerCornerLeftBottom) {
+        tiles.push({
+          locationId: location.locationId,
+          x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          y: location.y,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          image: '/assets/castle/InnerCornerLeftBottom.png'
+        });
+      }
+
+      const hasInnerCornerRightTop = !location.hasPathWest && !location.hasPathSouth;
+      if (hasInnerCornerRightTop) {
+        tiles.push({
+          locationId: location.locationId,
+          x: location.x,
+          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          image: '/assets/castle/InnerCornerRightTop.png'
+        });
+      }
+
+      const hasInnerCornerLeftTop = !location.hasPathEast && !location.hasPathSouth;
+      if (hasInnerCornerLeftTop) {
+        tiles.push({
+          locationId: location.locationId,
+          x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          image: '/assets/castle/InnerCornerLeftTop.png'
+        });
+      }
+
       if (!location.hasPathWest) {
-        for (let y = 1; y < GameService.wallsPerTile - 1; y++) {
+        for (let y = hasInnerCornerRightBottom ? 1 : 0; y < GameService.wallsPerTile - (hasInnerCornerRightTop ? 1 : 0); y++) {
           tiles.push({
             locationId: location.locationId,
             x: location.x,
@@ -90,7 +158,7 @@ export class GameService {
       }
 
       if (!location.hasPathEast) {
-        for (let y = 1; y < GameService.wallsPerTile - 1; y++) {
+        for (let y = hasInnerCornerLeftBottom ? 1 : 0; y < GameService.wallsPerTile - (hasInnerCornerLeftTop ? 1 : 0); y++) {
           tiles.push({
             locationId: location.locationId,
             x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
@@ -103,7 +171,7 @@ export class GameService {
       }
 
       if (!location.hasPathNorth) {
-        for (let x = 1; x < GameService.wallsPerTile - 1; x++) {
+        for (let x = hasInnerCornerRightBottom ? 1 : 0; x < GameService.wallsPerTile - (hasInnerCornerLeftBottom ? 1 : 0); x++) {
           tiles.push({
             locationId: location.locationId,
             x: location.x + x * GameService.tileSize / GameService.wallsPerTile,
@@ -116,7 +184,7 @@ export class GameService {
       }
 
       if (!location.hasPathSouth) {
-        for (let x = 1; x < GameService.wallsPerTile - 1; x++) {
+        for (let x = hasInnerCornerRightTop ? 1 : 0; x < GameService.wallsPerTile - (hasInnerCornerLeftTop ? 1 : 0); x++) {
           tiles.push({
             locationId: location.locationId,
             x: location.x + x * GameService.tileSize / GameService.wallsPerTile,
@@ -128,58 +196,47 @@ export class GameService {
         }
       }
 
-      if (!location.hasPathWest && !location.hasPathNorth) {
-        tiles.push({
-          locationId: location.locationId,
-          x: location.x,
-          y: location.y,
-          width: GameService.tileSize / GameService.wallsPerTile,
-          height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerRightBottom.png'
-        });
-      }
-
-      if (!location.hasPathEast && !location.hasPathNorth) {
+      if (location.hasPathNorth && location.hasPathEast && (location.locationNorth != null && !location.locationNorth.hasPathEast || location.locationEast != null && !location.locationEast.hasPathNorth)) {
         tiles.push({
           locationId: location.locationId,
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerLeftBottom.png'
+          image: '/assets/castle/OuterCornerRightTop.png'
         });
       }
 
-      if (!location.hasPathWest && !location.hasPathSouth) {
-        tiles.push({
-          locationId: location.locationId,
-          x: location.x,
-          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-          width: GameService.tileSize / GameService.wallsPerTile,
-          height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerRightTop.png'
-        });
-      }
-
-      if (!location.hasPathEast && !location.hasPathSouth) {
-        tiles.push({
-          locationId: location.locationId,
-          x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-          width: GameService.tileSize / GameService.wallsPerTile,
-          height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerLeftTop.png'
-        });
-      }
-
-      if (!location.hasPathWest && !location.hasPathNorth) {
+      if (location.hasPathNorth && location.hasPathWest && (location.locationNorth != null && !location.locationNorth.hasPathWest || location.locationWest != null && !location.locationWest.hasPathNorth)) {
         tiles.push({
           locationId: location.locationId,
           x: location.x,
           y: location.y,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerRightBottom.png'
+          image: '/assets/castle/OuterCornerLeftTop.png'
+        });
+      }
+
+      if (location.hasPathSouth && location.hasPathEast && (location.locationSouth != null && !location.locationSouth.hasPathEast || location.locationEast != null && !location.locationEast.hasPathSouth)) {
+        tiles.push({
+          locationId: location.locationId,
+          x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          image: '/assets/castle/OuterCornerRightBottom.png'
+        });
+      }
+
+      if (location.hasPathSouth && location.hasPathWest && (location.locationSouth != null && !location.locationSouth.hasPathWest || location.locationWest != null && !location.locationWest.hasPathSouth)) {
+        tiles.push({
+          locationId: location.locationId,
+          x: location.x,
+          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          image: '/assets/castle/OuterCornerLeftBottom.png'
         });
       }
     });
@@ -229,12 +286,27 @@ type LocationId = number;
 interface ILocationData {
   locationId: LocationId;
   visited: boolean;
+
   x: number;
   y: number;
+
   hasPathWest: boolean;
+  locationWest: ILocationData;
+
   hasPathEast: boolean;
+  locationEast: ILocationData;
+
   hasPathNorth: boolean;
+  locationNorth: ILocationData;
+
   hasPathSouth: boolean;
+  locationSouth: ILocationData;
+}
+
+export interface IWorld {
+  width: number;
+  height: number;
+  tiles: ITile[];
 }
 
 export interface ITile {
