@@ -274,13 +274,20 @@ export class GameService {
     }
 
     const pathConnection = pathConnections.get(locationId);
-    pathConnection.forEach(([neighborLocationId, directionFromParent]) => {
-      const neighborLocation = locationData.get(neighborLocationId);
-      if (neighborLocation != null && !neighborLocation.visited) {
-        this.traversePaths(neighborLocationId, locationId, directionFromParent, locationData, pathConnections);
-      }
-    });
-}
+    if (pathConnection != null) {
+      pathConnection.forEach(([neighborLocationId, neighborDirectionFromParent]) => {
+        const neighborLocation = locationData.get(neighborLocationId);
+        if (neighborLocation != null && !neighborLocation.visited) {
+          this.traversePaths(
+            neighborLocationId,
+            locationId,
+            neighborDirectionFromParent,
+            locationData,
+            pathConnections);
+        }
+      });
+    }
+  }
 
   private createWorld(tiles: ITile[]): IWorld {
     const leftValues = tiles.map(tile => tile.x);

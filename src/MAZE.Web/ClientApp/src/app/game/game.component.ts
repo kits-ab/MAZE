@@ -30,8 +30,6 @@ export class GameComponent implements OnInit {
         .attr('href', location => location.image)
         .exit()
         .remove();
-
-      console.log("child count: " + document.getElementsByTagName("svg")[0].childNodes.length);
     });
   }
 }
