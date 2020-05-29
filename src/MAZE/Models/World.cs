@@ -28,6 +28,16 @@ namespace MAZE.Models
         public void DiscoverLocation(LocationId locationId)
         {
             Locations.Single(location => location.Id == locationId).IsDiscovered = true;
+            foreach (var pathToDiscover in Paths.Where(path => !path.IsDiscovered && (path.From == locationId || path.To == locationId)))
+            {
+                pathToDiscover.IsDiscovered = true;
+                foreach (var obstacleToDiscover in Obstacles.Where(obstacle =>
+                    !obstacle.IsDiscovered && obstacle.BlockedPathIds.Contains(pathToDiscover.Id)))
+                {
+                    obstacleToDiscover.IsDiscovered = true;
+                }
+            }
+
             foreach (var neighborLocationIdToDiscover in Paths.Where(path => path.From == locationId && !Obstacles.Any(obstacle => obstacle.BlockedPathIds.Contains(path.Id))).Select(path => path.To))
             {
                 if (!Locations.Single(location => location.Id == neighborLocationIdToDiscover).IsDiscovered)

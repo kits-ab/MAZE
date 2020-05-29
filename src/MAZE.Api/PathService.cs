@@ -16,31 +16,20 @@ namespace MAZE.Api
             _gameService = gameService;
         }
 
-        public Result<IEnumerable<Path>, ReadGameError> GetDiscoveredPaths(GameId gameId)
+        public Result<IEnumerable<Path>, ReadGameError> GetPaths(GameId gameId)
         {
             var result = _gameService.GetGame(gameId);
 
             return result.Map(
                 game =>
                 {
-                    var visiblePaths = GetVisiblePaths(game);
+                    var discoveredPaths = game.World.Paths
+                        .Where(path => path.IsDiscovered)
+                        .Select(Convert);
 
-                    return new Result<IEnumerable<Path>, ReadGameError>(visiblePaths);
+                    return new Result<IEnumerable<Path>, ReadGameError>(discoveredPaths);
                 },
                 readGameError => readGameError);
-        }
-
-        private static IEnumerable<Path> GetVisiblePaths(Models.Game game)
-        {
-            var discoveredLocationIds = game.World.Locations
-                .Where(location => location.IsDiscovered)
-                .Select(location => location.Id)
-                .ToHashSet();
-
-            return game.World.Paths
-                .Where(path =>
-                    discoveredLocationIds.Contains(path.From) || discoveredLocationIds.Contains(path.To))
-                .Select(Convert);
         }
 
         private static Path Convert(Models.Path path)

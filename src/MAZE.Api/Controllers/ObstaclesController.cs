@@ -6,19 +6,19 @@ namespace MAZE.Api.Controllers
 {
     [Route("games/{gameId}/[controller]")]
     [ApiController]
-    public class PathsController : ControllerBase
+    public class ObstaclesController : ControllerBase
     {
-        private readonly PathService _pathService;
+        private readonly ObstacleService _obstacleService;
 
-        public PathsController(PathService pathService)
+        public ObstaclesController(ObstacleService obstacleService)
         {
-            _pathService = pathService;
+            _obstacleService = obstacleService;
         }
 
         [HttpGet]
         public IActionResult Get(GameId gameId)
         {
-            var result = _pathService.GetPaths(gameId);
+            var result = _obstacleService.GetObstacles(gameId);
 
             return result.Map<IActionResult>(
                 Ok,

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { GamesService, Location, Path } from '@kokitotsos/maze-client-angular';
-import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, combineLatest, interval } from 'rxjs';
+import { map, flatMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +17,7 @@ export class GameService {
     const locations$ = this.gamesApi.getLocations(gameId);
     const paths$ = this.gamesApi.getPaths(gameId);
     const tiles$ = combineLatest(locations$, paths$).pipe(map(([locations, paths]) => this.buildWorld(locations, paths)));
-    return tiles$.pipe(map(tiles => this.createWorld(tiles)));
+    return interval(1000).pipe(flatMap(() => tiles$)).pipe(map(tiles => this.createWorld(tiles)));
   }
 
   private buildWorld(locations: Location[], paths: Path[]): ITile[] {

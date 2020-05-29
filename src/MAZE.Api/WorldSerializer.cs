@@ -5,6 +5,7 @@ using GenericDataStructures;
 using MAZE.Events;
 using MAZE.Models;
 using Path = MAZE.Models.Path;
+using PathId = System.Int32;
 using WorldId = System.String;
 
 namespace MAZE.Api
@@ -30,7 +31,7 @@ namespace MAZE.Api
             var pathCounter = 0;
             var paths = new List<Path>();
 
-            var obstacles = new List<Obstacle>();
+            var pathIdsBlockedByObstacle = new Dictionary<(int X, int Y, ObstacleType ObstacleType), List<PathId>>();
 
             var characterCounter = 0;
             var characters = new List<Character>();
@@ -64,10 +65,23 @@ namespace MAZE.Api
                 // Read paths and obstacles
                 foreach (var locationInformation in locations)
                 {
+                    void AddBlockedPoint(PathId pathId, int pathX, int pathY, ObstacleType obstacleType)
+                    {
+                        var key = (x: pathX, y: pathY, obstacleType);
+                        if (!pathIdsBlockedByObstacle.ContainsKey(key))
+                        {
+                            pathIdsBlockedByObstacle.Add(key, new List<int>());
+                        }
+
+                        pathIdsBlockedByObstacle[key].Add(pathId);
+                    }
+
                     void TryAddPath(int xOffset, int yOffset, PathType pathType)
                     {
                         var (locationX, locationY) = locationInformation.Key;
-                        var pathCandidateColor = image.GetPixel(locationX + xOffset, locationY + yOffset).ToArgb();
+                        var pathX = locationX + xOffset;
+                        var pathY = locationY + yOffset;
+                        var pathCandidateColor = image.GetPixel(pathX, pathY).ToArgb();
                         if ((pathCandidateColor == _pathColor ||
                              pathCandidateColor == _wizardBlockedPathColor ||
                              pathCandidateColor == _rogueBlockedPathColor ||
@@ -79,22 +93,22 @@ namespace MAZE.Api
                             paths.Add(new Path(pathId, locationInformation.Value.Id, neighborLocation.Id, pathType));
                             if (pathCandidateColor == _wizardBlockedPathColor)
                             {
-                                obstacles.Add(new Obstacle(ObstacleType.ForceField, pathId));
+                                AddBlockedPoint(pathId, pathX, pathY, ObstacleType.ForceField);
                             }
 
                             if (pathCandidateColor == _rogueBlockedPathColor)
                             {
-                                obstacles.Add(new Obstacle(ObstacleType.Lock, pathId));
+                                AddBlockedPoint(pathId, pathX, pathY, ObstacleType.Lock);
                             }
 
                             if (pathCandidateColor == _warriorBlockedPathColor)
                             {
-                                obstacles.Add(new Obstacle(ObstacleType.Stone, pathId));
+                                AddBlockedPoint(pathId, pathX, pathY, ObstacleType.Stone);
                             }
 
                             if (pathCandidateColor == _clericBlockedPathColor)
                             {
-                                obstacles.Add(new Obstacle(ObstacleType.Ghost, pathId));
+                                AddBlockedPoint(pathId, pathX, pathY, ObstacleType.Ghost);
                             }
                         }
                     }
@@ -109,6 +123,13 @@ namespace MAZE.Api
                     TryAddPath(-1, 1, PathType.Portal);
                     TryAddPath(1, 1, PathType.Portal);
                 }
+            }
+
+            var obstacleCounter = 0;
+            var obstacles = new List<Obstacle>();
+            foreach (var obstacleInformation in pathIdsBlockedByObstacle)
+            {
+                obstacles.Add(new Obstacle(obstacleCounter++, ObstacleType.ForceField, obstacleInformation.Value));
             }
 
             var world = new World(worldId, locations.Values, paths, obstacles);

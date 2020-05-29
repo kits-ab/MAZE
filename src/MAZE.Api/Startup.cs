@@ -41,6 +41,7 @@ namespace MAZE.Api
             services.AddTransient<GameService>();
             services.AddTransient<LocationService>();
             services.AddTransient<PathService>();
+            services.AddTransient<ObstacleService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

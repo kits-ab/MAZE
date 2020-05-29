@@ -20,5 +20,7 @@ namespace MAZE.Models
         public LocationId To { get; }
 
         public PathType Type { get; }
+
+        public bool IsDiscovered { get; set; }
     }
 }
