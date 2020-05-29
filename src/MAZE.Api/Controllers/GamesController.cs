@@ -19,6 +19,11 @@ namespace MAZE.Api.Controllers
         [HttpPost]
         public IActionResult Post(Game game)
         {
+            if (game.World == null)
+            {
+                return BadRequest("A world is required when creating a game");
+            }
+
             var result = _gameService.NewGame(game.World);
 
             return result.Map<IActionResult>(

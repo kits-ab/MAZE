@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using GenericDataStructures;
-using MAZE.Events;
 using MAZE.Models;
 using GameId = System.String;
 
@@ -31,23 +29,13 @@ namespace MAZE
             var result = _eventRepository.GetEvents(id);
 
             return result.Map<Result<Game, ReadGameError>>(
-                gameEventsToRead =>
+                events =>
                 {
-                    var gameEvents = gameEventsToRead.ToList();
-                    var worldCreatedEvent = gameEvents.First();
-                    var world = worldCreatedEvent.Map(
-                        worldCreated => worldCreated.World,
-                        _ => throw new InvalidOperationException("First event should be world creation"));
+                    var world = new World();
 
-                    foreach (var @event in gameEvents.Skip(1))
+                    foreach (var @event in events)
                     {
-                        @event.Switch(
-                            _ => throw new InvalidOperationException("Cannot created world more than once"),
-                            characterAdded =>
-                            {
-                                world.Characters.Add(characterAdded.Character);
-                                world.DiscoverLocation(characterAdded.Character.LocationId);
-                            });
+                        @event.ApplyToWorld(world);
                     }
 
                     return new Game(id, world);

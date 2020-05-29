@@ -2,7 +2,7 @@
 
 namespace MAZE.Events
 {
-    public class CharacterAdded
+    public class CharacterAdded : Event
     {
         public CharacterAdded(Character character)
         {
@@ -10,5 +10,11 @@ namespace MAZE.Events
         }
 
         public Character Character { get; }
+
+        public override void ApplyToWorld(World world)
+        {
+            world.Characters.Add(Character);
+            world.DiscoverLocation(Character.LocationId);
+        }
     }
 }

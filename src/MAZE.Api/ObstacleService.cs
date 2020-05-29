@@ -3,17 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using GenericDataStructures;
 using MAZE.Api.Contracts;
+using MAZE.Events;
 using GameId = System.String;
+using ObstacleId = System.Int32;
 
 namespace MAZE.Api
 {
     public class ObstacleService
     {
         private readonly GameRepository _gameRepository;
+        private readonly EventRepository _eventRepository;
 
-        public ObstacleService(GameRepository gameRepository)
+        public ObstacleService(GameRepository gameRepository, EventRepository eventRepository)
         {
             _gameRepository = gameRepository;
+            _eventRepository = eventRepository;
         }
 
         public Result<IEnumerable<Obstacle>, ReadGameError> GetObstacles(GameId gameId)
@@ -27,6 +31,19 @@ namespace MAZE.Api
                         .Select(Convert);
 
                     return new Result<IEnumerable<Obstacle>, ReadGameError>(visibleObstacles);
+                },
+                readGameError => readGameError);
+        }
+
+        public VoidResult<ReadGameError> RemoveObstacle(string gameId, ObstacleId obstacleId)
+        {
+            var result = _gameRepository.GetGame(gameId);
+            return result.Map(
+                game =>
+                {
+                    _eventRepository.AddEvent(gameId, new ObstacleRemoved(obstacleId));
+
+                    return VoidResult<ReadGameError>.Success;
                 },
                 readGameError => readGameError);
         }

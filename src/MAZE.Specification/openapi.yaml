@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 2.0.0
+  version: 2.1.0
   title: MAZE
   description: MAZE API
 
@@ -215,6 +215,20 @@ paths:
         '404':
           $ref: '#/components/responses/GameNotFound'
 
+  /games/{gameId}/obstacles/{obstacleId}:
+    delete:
+      operationId: removeObstacle
+      tags:
+        - games
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+        - $ref: '#/components/parameters/ObstacleId'
+      responses:
+        '204':
+          description: Obstacle removed
+        '404':
+          $ref: '#/components/responses/GameNotFound'
+
   /games/{gameId}/paths:
     get:
       operationId: getPaths
@@ -288,7 +302,7 @@ components:
       description: A world identifier
       type: string
       pattern: '^[a-zA-Z]+$'
-      example: Castle
+      example: "Castle"
 
     LocationId:
       description: A location identifier
@@ -304,6 +318,7 @@ components:
     PathId:
       description: A path identifier
       type: number
+      example: 0
 
     Path:
       properties:
@@ -332,6 +347,7 @@ components:
     ObstacleId:
       description: An obstacle identifier
       type: number
+      example: 0
 
     Obstacle:
       properties:
@@ -357,6 +373,7 @@ components:
     TrapId:
       description: A trap identifier
       type: number
+      example: 0
 
     Trap:
       properties:
@@ -372,6 +389,7 @@ components:
     CharacterId:
       description: A character identifier
       type: number
+      example: 0
 
     CharacterClass:
       description: The class of a character
@@ -458,6 +476,13 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/CharacterId'
+
+    ObstacleId:
+      name: obstacleId      
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObstacleId'
 
   responses:
     GameNotFound:

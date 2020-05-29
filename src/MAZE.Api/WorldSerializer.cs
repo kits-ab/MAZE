@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using GenericDataStructures;
 using MAZE.Events;
 using MAZE.Models;
 using Path = MAZE.Models.Path;
@@ -23,7 +22,7 @@ namespace MAZE.Api
         private readonly int _warriorBlockedPathColor = Color.FromArgb(255, 255, 0, 0).ToArgb();
         private readonly int _clericBlockedPathColor = Color.FromArgb(255, 255, 255, 0).ToArgb();
 
-        public IEnumerable<Union<WorldCreated, CharacterAdded>> Deserialize(WorldId worldId, Stream worldStream)
+        public IEnumerable<Event> Deserialize(WorldId worldId, Stream worldStream)
         {
             var locationCounter = 0;
             var locations = new Dictionary<(int X, int Y), Location>();
@@ -132,8 +131,7 @@ namespace MAZE.Api
                 obstacles.Add(new Obstacle(obstacleCounter++, ObstacleType.ForceField, obstacleInformation.Value));
             }
 
-            var world = new World(worldId, locations.Values, paths, obstacles);
-            yield return new WorldCreated(world);
+            yield return new WorldLoaded(worldId, locations.Values, paths, obstacles);
 
             foreach (var character in characters)
             {

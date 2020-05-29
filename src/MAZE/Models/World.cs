@@ -7,21 +7,13 @@ namespace MAZE.Models
 {
     public class World
     {
-        public World(WorldId id, IEnumerable<Location> locations, IEnumerable<Path> paths, IEnumerable<Obstacle> obstacles)
-        {
-            Id = id;
-            Paths = paths.ToList();
-            Locations = locations.ToList();
-            Obstacles = obstacles.ToList();
-        }
+        public WorldId? Id { get; set; }
 
-        public WorldId Id { get; }
+        public List<Location> Locations { get; } = new List<Location>();
 
-        public List<Location> Locations { get; }
+        public List<Path> Paths { get; } = new List<Path>();
 
-        public List<Path> Paths { get; }
-
-        public List<Obstacle> Obstacles { get; }
+        public List<Obstacle> Obstacles { get; } = new List<Obstacle>();
 
         public List<Character> Characters { get; } = new List<Character>();
 

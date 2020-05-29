@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using GameId = System.String;
+using ObstacleId = System.Int32;
 
 namespace MAZE.Api.Controllers
 {
@@ -22,6 +23,23 @@ namespace MAZE.Api.Controllers
 
             return result.Map<IActionResult>(
                 Ok,
+                readGameError =>
+                {
+                    return readGameError switch
+                    {
+                        ReadGameError.NotFound => NotFound("Game not found"),
+                        _ => throw new ArgumentOutOfRangeException(nameof(readGameError), readGameError, null)
+                    };
+                });
+        }
+
+        [HttpDelete("{obstacleId}")]
+        public IActionResult Delete(GameId gameId, ObstacleId obstacleId)
+        {
+            var result = _obstacleService.RemoveObstacle(gameId, obstacleId);
+
+            return result.Map<IActionResult>(
+                NoContent,
                 readGameError =>
                 {
                     return readGameError switch

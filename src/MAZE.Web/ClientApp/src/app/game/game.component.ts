@@ -20,7 +20,7 @@ export class GameComponent implements OnInit {
         .select('svg')
         .attr('viewBox', `${world.x} ${world.y} ${world.width} ${world.height}`)
         .selectAll<SVGImageElement, ITile>('image')
-        .data<ITile>(world.tiles, tile => tile.locationId.toString())
+        .data<ITile>(world.tiles, tile => `${tile.locationId} ${tile.x} ${tile.y} ${tile.width} ${tile.height}`)
         .enter()
         .append('image')
         .attr('x', tile => tile.x)
@@ -30,6 +30,8 @@ export class GameComponent implements OnInit {
         .attr('href', location => location.image)
         .exit()
         .remove();
+
+      console.log("child count: " + document.getElementsByTagName("svg")[0].childNodes.length);
     });
   }
 }

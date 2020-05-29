@@ -6,15 +6,14 @@ namespace MAZE.Api.Contracts
 {
     public class Game
     {
-        public Game(string world)
+        public Game(WorldId? world)
         {
             World = world;
         }
 
         public GameId? Id { get; set; }
 
-        [Required]
         [RegularExpression("^[a-zA-Z]+$")]
-        public WorldId World { get; set; }
+        public WorldId? World { get; set; }
     }
 }

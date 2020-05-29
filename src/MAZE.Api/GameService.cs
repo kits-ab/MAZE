@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using GenericDataStructures;
-using MAZE.Events;
 using Microsoft.Extensions.Hosting;
 using GameId = System.String;
 using WorldId = System.String;
@@ -33,7 +32,7 @@ namespace MAZE.Api
                 return NewGameError.WorldNotFound;
             }
 
-            List<Union<WorldCreated, CharacterAdded>> gameCreationEvents;
+            List<Event> gameCreationEvents;
             using (var worldStream = System.IO.File.OpenRead(worldFilePath))
             {
                 gameCreationEvents = _worldSerializer.Deserialize(worldId, worldStream).ToList();
