@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GenericDataStructures;
 using MAZE.Api.Contracts;
 using MAZE.Events;
@@ -13,11 +14,13 @@ namespace MAZE.Api
     {
         private readonly GameRepository _gameRepository;
         private readonly EventRepository _eventRepository;
+        private readonly EventService _eventService;
 
-        public ObstacleService(GameRepository gameRepository, EventRepository eventRepository)
+        public ObstacleService(GameRepository gameRepository, EventRepository eventRepository, EventService eventService)
         {
             _gameRepository = gameRepository;
             _eventRepository = eventRepository;
+            _eventService = eventService;
         }
 
         public Result<IEnumerable<Obstacle>, ReadGameError> GetObstacles(GameId gameId)
@@ -35,17 +38,19 @@ namespace MAZE.Api
                 readGameError => readGameError);
         }
 
-        public VoidResult<ReadGameError> RemoveObstacle(string gameId, ObstacleId obstacleId)
+        public async Task<VoidResult<ReadGameError>> RemoveObstacleAsync(string gameId, ObstacleId obstacleId)
         {
             var result = _gameRepository.GetGame(gameId);
-            return result.Map(
-                game =>
+            return await result.Map(
+                async game =>
                 {
                     _eventRepository.AddEvent(gameId, new ObstacleRemoved(obstacleId));
 
+                    await _eventService.NotifyWorldUpdatedAsync(gameId, "locations", "paths", "obstacles");
+
                     return VoidResult<ReadGameError>.Success;
                 },
-                readGameError => readGameError);
+                readGameError => Task.FromResult(new VoidResult<ReadGameError>(readGameError)));
         }
 
         private static Obstacle Convert(Models.Obstacle obstacle)

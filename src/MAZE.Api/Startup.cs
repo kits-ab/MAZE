@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using MAZE.Api.Hub;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,9 @@ namespace MAZE.Api
                     options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 });
 
+            services.AddSignalR()
+                .AddAzureSignalR();
+
 #if DEBUG
             if (_environment.IsDevelopment())
             {
@@ -42,6 +46,7 @@ namespace MAZE.Api
             services.AddTransient<LocationService>();
             services.AddTransient<PathService>();
             services.AddTransient<ObstacleService>();
+            services.AddTransient<EventService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -67,6 +72,11 @@ namespace MAZE.Api
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseAzureSignalR(routes =>
+            {
+                routes.MapHub<GameHub>("/gameEvents");
+            });
 
             app.UseEndpoints(endpoints =>
             {
