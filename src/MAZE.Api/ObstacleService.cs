@@ -38,19 +38,24 @@ namespace MAZE.Api
                 readGameError => readGameError);
         }
 
-        public async Task<VoidResult<ReadGameError>> RemoveObstacleAsync(string gameId, ObstacleId obstacleId)
+        public async Task<VoidResult<RemoveObstacleError>> RemoveObstacleAsync(string gameId, ObstacleId obstacleId)
         {
             var result = _gameRepository.GetGame(gameId);
             return await result.Map(
                 async game =>
                 {
+                    if (!game.World.Obstacles.Exists(obstacle => obstacle.Id == obstacleId))
+                    {
+                        return RemoveObstacleError.ObstacleNotFound;
+                    }
+
                     _eventRepository.AddEvent(gameId, new ObstacleRemoved(obstacleId));
 
                     await _eventService.NotifyWorldUpdatedAsync(gameId, "locations", "paths", "obstacles");
 
-                    return VoidResult<ReadGameError>.Success;
+                    return VoidResult<RemoveObstacleError>.Success;
                 },
-                readGameError => Task.FromResult(new VoidResult<ReadGameError>(readGameError)));
+                readGameError => Task.FromResult(new VoidResult<RemoveObstacleError>(Convert(readGameError))));
         }
 
         private static Obstacle Convert(Models.Obstacle obstacle)
@@ -67,6 +72,15 @@ namespace MAZE.Api
                 Models.ObstacleType.Stone => ObstacleType.Stone,
                 Models.ObstacleType.Ghost => ObstacleType.Ghost,
                 _ => throw new ArgumentOutOfRangeException(nameof(obstacleType), obstacleType, null)
+            };
+        }
+
+        private static RemoveObstacleError Convert(ReadGameError error)
+        {
+            return error switch
+            {
+                ReadGameError.NotFound => RemoveObstacleError.GameNotFound,
+                _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
             };
         }
     }

@@ -41,12 +41,13 @@ namespace MAZE.Api.Controllers
 
             return result.Map<IActionResult>(
                 NoContent,
-                readGameError =>
+                error =>
                 {
-                    return readGameError switch
+                    return error switch
                     {
-                        ReadGameError.NotFound => NotFound("Game not found"),
-                        _ => throw new ArgumentOutOfRangeException(nameof(readGameError), readGameError, null)
+                        RemoveObstacleError.GameNotFound => NotFound("Game not found"),
+                        RemoveObstacleError.ObstacleNotFound => NotFound("Obstacle not found"),
+                        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
                     };
                 });
         }

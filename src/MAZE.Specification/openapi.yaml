@@ -227,7 +227,14 @@ paths:
         '204':
           description: Obstacle removed
         '404':
-          $ref: '#/components/responses/GameNotFound'
+          description: Resource not found
+          content:
+            application/json:
+              examples:
+                GameNotFound:
+                  $ref: '#/components/examples/GameNotFound'
+                ObstacleNotFound:
+                  $ref: '#/components/examples/ObstacleNotFound'
 
   /games/{gameId}/paths:
     get:
@@ -489,4 +496,12 @@ components:
       description: Game not found
       content:
         application/json:
-          example: '"Game not found"'
+          example:
+            - $ref: '#/components/examples/GameNotFound'
+
+  examples:
+    GameNotFound:
+      description: Game not found
+    
+    ObstacleNotFound:
+      description: Obstacle not found
