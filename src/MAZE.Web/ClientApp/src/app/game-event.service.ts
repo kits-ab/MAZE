@@ -1,21 +1,24 @@
-import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
+import { GameId } from './game.service';
+import { Observable, Subject } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
 export class GameEventService {
+  private readonly worldUpdates = new Subject<IWorldUpdated>();
 
-  constructor() {
+  constructor(gameId: GameId) {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('https://localhost:44396/gameEvents')
+      .withUrl(`https://localhost:44396/gameEvents?gameId=${gameId}`)
       .build();
 
     connection.on('WorldUpdated', (worldUpdated: IWorldUpdated) => {
-      console.log(worldUpdated.potentiallyChangedResources.join(',') + ' might needs update');
+      this.worldUpdates.next(worldUpdated);
     });
 
     connection.start();
+  }
+
+  getWorldUpdates(): Observable<IWorldUpdated> {
+    return this.worldUpdates;
   }
 }
 

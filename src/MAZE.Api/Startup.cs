@@ -28,6 +28,8 @@ namespace MAZE.Api
                     options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 });
 
+            services.AddCors();
+
             services.AddSignalR()
                 .AddAzureSignalR();
 
@@ -59,7 +61,18 @@ namespace MAZE.Api
 
             app.UseCors(options =>
             {
-                options.AllowAnyOrigin();
+                if (env.IsDevelopment())
+                {
+                    options.WithOrigins("https://localhost:44320");
+                }
+                else
+                {
+                    options.WithOrigins("https://maze-client.azurewebsites.net");
+                }
+
+                options.AllowAnyHeader()
+                    .WithMethods("GET", "POST")
+                    .AllowCredentials();
             });
 
             app.UseSwaggerUI(options =>

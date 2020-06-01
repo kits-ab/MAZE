@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { GamesService, Location, Path } from '@kokitotsos/maze-client-angular';
-import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, combineLatest, Subject } from 'rxjs';
+import { map, flatMap, filter } from 'rxjs/operators';
 import { GameEventService } from './game-event.service';
 
 @Injectable({
@@ -11,14 +11,42 @@ export class GameService {
   private static readonly tileSize = 30;
   private static readonly wallsPerTile = 6;
 
-  constructor(private readonly gamesApi: GamesService, private readonly gameEventService: GameEventService) {
+  constructor(private readonly gamesApi: GamesService) {
   }
 
   getWorld(gameId: GameId): Observable<IWorld> {
-    const locations$ = this.gamesApi.getLocations(gameId);
-    const paths$ = this.gamesApi.getPaths(gameId);
-    const tiles$ = combineLatest(locations$, paths$).pipe(map(([locations, paths]) => this.buildWorld(locations, paths)));
-    return tiles$.pipe(map(tiles => this.createWorld(tiles)));
+    const worlds$ = new Subject<IWorld>();
+
+    const initialLocations$ = this.gamesApi.getLocations(gameId);
+    const initialPaths$ = this.gamesApi.getPaths(gameId);
+    const initialWorld$ = combineLatest(initialLocations$, initialPaths$)
+      .pipe(map(([locations, paths]) => this.buildWorld(locations, paths)))
+      .pipe(map(tiles => this.createWorld(tiles)));
+
+    initialWorld$.subscribe(initialWorld => {
+      worlds$.next(initialWorld);
+    });
+
+    const gameEventService = new GameEventService(gameId);
+    const worldUpdates$ = gameEventService.getWorldUpdates();
+
+    const locations$ = worldUpdates$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('locations')))
+      .pipe(flatMap(_ => this.gamesApi.getLocations(gameId)));
+
+    const paths$ = worldUpdates$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('paths')))
+      .pipe(flatMap(_ => this.gamesApi.getPaths(gameId)));
+
+    const updatedWorlds$ = combineLatest(locations$, paths$)
+      .pipe(map(([locations, paths]) => this.buildWorld(locations, paths)))
+      .pipe(map(tiles => this.createWorld(tiles)));
+
+    updatedWorlds$.subscribe(updatedWorld => {
+      worlds$.next(updatedWorld);
+    });
+
+    return worlds$;
   }
 
   private buildWorld(locations: Location[], paths: Path[]): ITile[] {
@@ -310,7 +338,7 @@ export class GameService {
   }
 }
 
-type GameId = string;
+export type GameId = string;
 
 type LocationId = number;
 
