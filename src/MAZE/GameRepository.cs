@@ -7,7 +7,7 @@ namespace MAZE
 {
     public class GameRepository
     {
-        private static int _gameCounter = 0;
+        private static int _gameCounter;
 
         private readonly EventRepository _eventRepository;
 
