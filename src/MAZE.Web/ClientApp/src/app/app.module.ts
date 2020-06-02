@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
-import { ApiModule } from '@kokitotsos/maze-client-angular';
+import { ApiModule, BASE_PATH } from '@kokitotsos/maze-client-angular';
 
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
@@ -12,6 +12,7 @@ import { HomeComponent } from './home/home.component';
 import { CounterComponent } from './counter/counter.component';
 import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { GameComponent } from './game/game.component';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,7 @@ import { GameComponent } from './game/game.component';
       { path: 'game/:id', component: GameComponent }
     ])
   ],
-  providers: [],
+  providers: [{ provide: BASE_PATH, useValue: environment.apiUrl }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
