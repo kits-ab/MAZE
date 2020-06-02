@@ -1,13 +1,14 @@
 import * as signalR from '@microsoft/signalr';
 import { GameId } from './game.service';
 import { Observable, Subject } from 'rxjs';
+import { environment } from '../environments/environment';
 
 export class GameEventService {
   private readonly worldUpdates = new Subject<IWorldUpdated>();
 
   constructor(gameId: GameId) {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`https://localhost:44396/gameEvents?gameId=${gameId}`)
+      .withUrl(`${environment.apiUrl}/gameEvents?gameId=${gameId}`)
       .build();
 
     connection.on('WorldUpdated', (worldUpdated: IWorldUpdated) => {
