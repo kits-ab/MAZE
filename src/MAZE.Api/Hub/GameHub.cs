@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
+using MAZE.Api.Contracts;
 using Microsoft.AspNetCore.SignalR;
-using GameId = System.String;
 
 namespace MAZE.Api.Hub
 {
@@ -19,6 +19,8 @@ namespace MAZE.Api.Hub
             {
                 Context.Abort();
             }
+
+            Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths"));
 
             return base.OnConnectedAsync();
         }

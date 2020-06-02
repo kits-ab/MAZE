@@ -17,7 +17,7 @@ namespace MAZE.Api
 
         public async Task NotifyWorldUpdatedAsync(GameId gameId, params string[] potentiallyChangedResources)
         {
-            await _hubContext.Clients.Groups(gameId).SendAsync("WorldUpdated", new WorldUpdated(potentiallyChangedResources));
+            await _hubContext.Clients.Groups(gameId).SendAsync(nameof(WorldUpdated), new WorldUpdated(potentiallyChangedResources));
         }
     }
 }
