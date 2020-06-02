@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import * as d3 from 'd3';
 import { GameService, ITile } from '../game.service';
 
@@ -10,11 +11,14 @@ import { GameService, ITile } from '../game.service';
 export class GameComponent implements OnInit {
   
 
-  constructor(readonly gameService: GameService) {
+  constructor(readonly activatedRoute: ActivatedRoute, readonly gameService: GameService) {
   }
 
   ngOnInit() {
-    const world$ = this.gameService.getWorld('0');
+
+    const gameId = this.activatedRoute.snapshot.params.id;
+
+    const world$ = this.gameService.getWorld(gameId);
     world$.subscribe(world => {
       d3
         .select('svg')

@@ -28,9 +28,8 @@ import { GameComponent } from './game/game.component';
     ApiModule,
     FormsModule,
     RouterModule.forRoot([
-      { path: '', component: GameComponent, pathMatch: 'full' },
-      { path: 'counter', component: CounterComponent },
-      { path: 'fetch-data', component: FetchDataComponent },
+      { path: '', component: HomeComponent, pathMatch: 'full' },
+      { path: 'game/:id', component: GameComponent }
     ])
   ],
   providers: [],
