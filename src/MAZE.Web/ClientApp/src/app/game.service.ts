@@ -105,155 +105,134 @@ export class GameService {
 
     locationData.forEach(location => {
       tiles.push({
-        locationId: location.locationId,
         x: location.x,
         y: location.y,
         width: GameService.tileSize,
         height: GameService.tileSize,
-        image: '/assets/castle/Floor.png'
+        type: 'floor'
       });
 
       const hasInnerCornerRightBottom = !location.hasPathWest && !location.hasPathNorth;
       if (hasInnerCornerRightBottom) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x,
           y: location.y,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerRightBottom.png'
+          type: 'wall-corner-inner-right-bottom'
         });
       }
 
       const hasInnerCornerLeftBottom = !location.hasPathEast && !location.hasPathNorth;
       if (hasInnerCornerLeftBottom) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerLeftBottom.png'
+          type: 'wall-corner-inner-left-bottom'
         });
       }
 
       const hasInnerCornerRightTop = !location.hasPathWest && !location.hasPathSouth;
       if (hasInnerCornerRightTop) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x,
           y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerRightTop.png'
+          type: 'wall-corner-inner-right-top'
         });
       }
 
       const hasInnerCornerLeftTop = !location.hasPathEast && !location.hasPathSouth;
       if (hasInnerCornerLeftTop) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/InnerCornerLeftTop.png'
+          type: 'wall-corner-inner-left-top'
         });
       }
 
       if (!location.hasPathWest) {
-        for (let y = hasInnerCornerRightBottom ? 1 : 0; y < GameService.wallsPerTile - (hasInnerCornerRightTop ? 1 : 0); y++) {
-          tiles.push({
-            locationId: location.locationId,
+        tiles.push({
             x: location.x,
-            y: location.y + y * GameService.tileSize / GameService.wallsPerTile,
+            y: location.y + (hasInnerCornerRightBottom ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
             width: GameService.tileSize / GameService.wallsPerTile,
-            height: GameService.tileSize / GameService.wallsPerTile,
-            image: '/assets/castle/Left.png'
+            height: GameService.tileSize - ((hasInnerCornerRightBottom ? 1 : 0) + (hasInnerCornerRightTop ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
+            type: 'wall-left'
           });
-        }
       }
 
       if (!location.hasPathEast) {
-        for (let y = hasInnerCornerLeftBottom ? 1 : 0; y < GameService.wallsPerTile - (hasInnerCornerLeftTop ? 1 : 0); y++) {
-          tiles.push({
-            locationId: location.locationId,
+        tiles.push({
             x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-            y: location.y + y * GameService.tileSize / GameService.wallsPerTile,
+            y: location.y + (hasInnerCornerLeftBottom ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
             width: GameService.tileSize / GameService.wallsPerTile,
-            height: GameService.tileSize / GameService.wallsPerTile,
-            image: '/assets/castle/Right.png'
+            height: GameService.tileSize - ((hasInnerCornerLeftBottom ? 1 : 0) + (hasInnerCornerLeftTop ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
+            type: 'wall-right'
           });
-        }
       }
 
       if (!location.hasPathNorth) {
-        for (let x = hasInnerCornerRightBottom ? 1 : 0; x < GameService.wallsPerTile - (hasInnerCornerLeftBottom ? 1 : 0); x++) {
-          tiles.push({
-            locationId: location.locationId,
-            x: location.x + x * GameService.tileSize / GameService.wallsPerTile,
+        tiles.push({
+            x: location.x + (hasInnerCornerRightBottom ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
             y: location.y,
-            width: GameService.tileSize / GameService.wallsPerTile,
+            width: GameService.tileSize - ((hasInnerCornerRightBottom ? 1 : 0) + (hasInnerCornerLeftBottom ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
             height: GameService.tileSize / GameService.wallsPerTile,
-            image: '/assets/castle/Top.png'
+            type: 'wall-top'
           });
         }
-      }
 
       if (!location.hasPathSouth) {
-        for (let x = hasInnerCornerRightTop ? 1 : 0; x < GameService.wallsPerTile - (hasInnerCornerLeftTop ? 1 : 0); x++) {
-          tiles.push({
-            locationId: location.locationId,
-            x: location.x + x * GameService.tileSize / GameService.wallsPerTile,
+        tiles.push({
+            x: location.x + (hasInnerCornerRightTop ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
             y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-            width: GameService.tileSize / GameService.wallsPerTile,
+            width: GameService.tileSize - ((hasInnerCornerRightTop ? 1 : 0) + (hasInnerCornerLeftTop ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
             height: GameService.tileSize / GameService.wallsPerTile,
-            image: '/assets/castle/Bottom.png'
+            type: 'wall-bottom'
           });
-        }
       }
 
       if (location.hasPathNorth && location.hasPathEast && (location.locationNorth != null && !location.locationNorth.hasPathEast || location.locationEast != null && !location.locationEast.hasPathNorth)) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/OuterCornerRightTop.png'
+          type: 'wall-corner-outer-right-top'
         });
       }
 
       if (location.hasPathNorth && location.hasPathWest && (location.locationNorth != null && !location.locationNorth.hasPathWest || location.locationWest != null && !location.locationWest.hasPathNorth)) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x,
           y: location.y,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/OuterCornerLeftTop.png'
+          type: 'wall-corner-outer-left-top'
         });
       }
 
       if (location.hasPathSouth && location.hasPathEast && (location.locationSouth != null && !location.locationSouth.hasPathEast || location.locationEast != null && !location.locationEast.hasPathSouth)) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/OuterCornerRightBottom.png'
+          type: 'wall-corner-outer-right-bottom'
         });
       }
 
       if (location.hasPathSouth && location.hasPathWest && (location.locationSouth != null && !location.locationSouth.hasPathWest || location.locationWest != null && !location.locationWest.hasPathSouth)) {
         tiles.push({
-          locationId: location.locationId,
           x: location.x,
           y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
-          image: '/assets/castle/OuterCornerLeftBottom.png'
+          type: 'wall-corner-outer-left-bottom'
         });
       }
     });
@@ -356,10 +335,15 @@ export interface IWorld {
 }
 
 export interface ITile {
-  locationId: LocationId;
   x: number;
   y: number;
   width: number;
   height: number;
-  image: string;
+  type: TileType;
 }
+
+export type TileType =
+  'floor' |
+  'wall-left' | 'wall-right' | 'wall-top' | 'wall-bottom' |
+  'wall-corner-inner-left-bottom' | 'wall-corner-inner-left-top' | 'wall-corner-inner-right-bottom' | 'wall-corner-inner-right-top' |
+  'wall-corner-outer-left-bottom' | 'wall-corner-outer-left-top' | 'wall-corner-outer-right-bottom' | 'wall-corner-outer-right-top';

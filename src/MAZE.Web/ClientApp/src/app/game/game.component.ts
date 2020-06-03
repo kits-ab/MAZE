@@ -23,15 +23,15 @@ export class GameComponent implements OnInit {
       d3
         .select('svg')
         .attr('viewBox', `${world.x} ${world.y} ${world.width} ${world.height}`)
-        .selectAll<SVGImageElement, ITile>('image')
-        .data<ITile>(world.tiles, tile => `${tile.locationId} ${tile.x} ${tile.y} ${tile.width} ${tile.height}`)
+        .selectAll<SVGRectElement, ITile>('rect')
+        .data<ITile>(world.tiles, tile => `${tile.type} ${tile.x} ${tile.y} ${tile.width} ${tile.height}`)
         .enter()
-        .append('image')
+        .append('rect')
         .attr('x', tile => tile.x)
         .attr('y', tile => tile.y)
         .attr('width', tile => tile.width)
         .attr('height', tile => tile.height)
-        .attr('href', location => location.image)
+        .attr('fill', location => `url(#${location.type})`)
         .exit()
         .remove();
     });
