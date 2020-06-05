@@ -77,7 +77,7 @@ export class GameService {
 
     const pathConnections = new Map<LocationId, [LocationId, Path.TypeEnum][]>();
     paths.forEach(path => {
-      if (path.type === 'West' || path.type === 'East' || path.type === 'North' || path.type === 'South') {
+      if (path.type === 'west' || path.type === 'east' || path.type === 'north' || path.type === 'south') {
         if (!pathConnections.has(path.from)) {
           pathConnections.set(path.from, [[path.to, path.type]]);
         } else {
@@ -89,22 +89,22 @@ export class GameService {
           const connectedLocation = locationData.get(path.to);
 
           switch (path.type) {
-            case 'West':
+            case 'west':
               location.hasPathWest = true;
               location.locationWest = connectedLocation;
               break;
 
-            case 'East':
+            case 'east':
               location.hasPathEast = true;
               location.locationEast = connectedLocation;
               break;
 
-            case 'North':
+            case 'north':
               location.hasPathNorth = true;
               location.locationNorth = connectedLocation;
               break;
 
-            case 'South':
+            case 'south':
               location.hasPathSouth = true;
               location.locationSouth = connectedLocation;
               break;
