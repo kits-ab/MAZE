@@ -12,6 +12,7 @@ import { HomeComponent } from './home/home.component';
 import { GameComponent } from './game/game.component';
 import { environment } from '../environments/environment';
 import { GameControlComponent } from './game-control/game-control.component';
+import { GameWithControlComponent } from './game-with-control/game-with-control.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { GameControlComponent } from './game-control/game-control.component';
     NavMenuComponent,
     HomeComponent,
     GameComponent,
-    GameControlComponent
+    GameControlComponent,
+    GameWithControlComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -29,7 +31,8 @@ import { GameControlComponent } from './game-control/game-control.component';
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'game/:id', component: GameComponent },
-      { path: 'gameControl/:id', component: GameControlComponent }
+      { path: 'gameControl/:id', component: GameControlComponent },
+      { path: 'gameWithControl/:id', component: GameWithControlComponent }
     ])
   ],
   providers: [{ provide: BASE_PATH, useValue: environment.apiUrl }],

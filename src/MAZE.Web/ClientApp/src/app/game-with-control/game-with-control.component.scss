@@ -1,0 +1,15 @@
+.game-with-controls {
+    width: 100%;
+    height: calc(100vh - 75px);
+    display: flex;
+
+    .controls {
+        width: 20%;
+        height: 100%;
+    }
+
+    .game {
+        width: 80%;
+        height: 100%;
+    }
+}

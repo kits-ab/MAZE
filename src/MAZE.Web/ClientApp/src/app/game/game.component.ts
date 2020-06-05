@@ -14,7 +14,9 @@ export class GameComponent implements OnInit {
   private static readonly characterSize = 20;
   private readonly gameService = new GameService(this.activatedRoute.snapshot.params.id, this.gamesApi);
 
-  constructor(readonly activatedRoute: ActivatedRoute, readonly gamesApi: GamesService) {
+  constructor(
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly gamesApi: GamesService) {
   }
 
   ngOnInit() {

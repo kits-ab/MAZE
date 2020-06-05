@@ -291,7 +291,13 @@ components:
           type: string 
           description: A JSON-Pointer 
         value: 
-          type: object 
+          oneOf:
+            - type: object
+            - type: number
+            - type: string
+            - type: boolean
+            - type: array
+            - type: integer
           description: The value to be used within the operations.
         from: 
           type: string 

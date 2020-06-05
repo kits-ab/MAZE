@@ -1,1 +1,7 @@
-<p>game-control works!</p>
+<ng-container *ngIf="characters != null">
+  <ng-container *ngFor="let character of characters">
+    <div *ngIf="getMovements(character.id, 'east') != null">
+      <button type="button" *ngFor="let movement of getMovements(character.id, 'east')" [disabled]="movement.locationId == null" (click)="move(character.id, movement.locationId)">{{movement.numberOfSteps}}</button>
+    </div>
+  </ng-container>
+</ng-container>
