@@ -297,7 +297,9 @@ components:
             - type: string
             - type: boolean
             - type: array
+              items: {}
             - type: integer
+          nullable: true
           description: The value to be used within the operations.
         from: 
           type: string 
