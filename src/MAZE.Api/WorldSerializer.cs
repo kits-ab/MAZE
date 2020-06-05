@@ -54,7 +54,7 @@ namespace MAZE.Api
 
                             if (color == _wizardStartLocationColor)
                             {
-                                var character = new Character(characterCounter++, CharacterClass.Wizard, location.Id);
+                                var character = new Character(characterCounter++, CharacterClass.Mage, location.Id);
                                 characters.Add(character);
                             }
                         }

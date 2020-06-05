@@ -1,40 +1,58 @@
-import { Injectable } from '@angular/core';
-import { GamesService, Location, Path } from '@kokitotsos/maze-client-angular';
+import { GamesService, Location, Path, Character } from '@kokitotsos/maze-client-angular';
 import { Observable, combineLatest, of } from 'rxjs';
 import { map, flatMap } from 'rxjs/operators';
 import { GameEventService } from './game-event.service';
 
-@Injectable({
-  providedIn: 'root'
-})
 export class GameService {
   private static readonly tileSize = 30;
   private static readonly wallsPerTile = 6;
 
-  constructor(private readonly gamesApi: GamesService) {
+  private readonly gameEventService = new GameEventService(this.gameId);
+
+  constructor(private readonly gameId: GameId, private readonly gamesApi: GamesService) {
   }
 
-  getWorld(gameId: GameId): Observable<IWorld> {
+  getGame(): Observable<IGame> {
     let latestLocations: Location[] = null;
     let latestPaths: Path[] = null;
+    let latestWorld: IWorld = null;
+    let latestCharacters: Character[] = null;
 
-    const gameEventService = new GameEventService(gameId);
-    const worldUpdates$ = gameEventService.getWorldUpdates();
+    const worldUpdates$ = this.gameEventService.getWorldUpdates();
 
     return worldUpdates$.pipe(flatMap(worldUpdate => {
-      const locations$ = worldUpdate.potentiallyChangedResources.includes('locations') ? this.gamesApi.getLocations(gameId) : of(latestLocations);
-      const paths$ = worldUpdate.potentiallyChangedResources.includes('paths') ? this.gamesApi.getPaths(gameId) : of(latestPaths);
-      return combineLatest(locations$, paths$)
+      const locationsChanged = worldUpdate.potentiallyChangedResources.includes('locations');
+      const pathsChanged = worldUpdate.potentiallyChangedResources.includes('paths');
+      const charactersChanged = worldUpdate.potentiallyChangedResources.includes('characters');
+
+      const locations$ = locationsChanged ? this.gamesApi.getLocations(this.gameId) : of(latestLocations);
+      const paths$ = pathsChanged ? this.gamesApi.getPaths(this.gameId) : of(latestPaths);
+      const world$ = locationsChanged || pathsChanged ? combineLatest(locations$, paths$)
         .pipe(map(([locations, paths]) => {
           latestLocations = locations;
           latestPaths = paths;
-          return this.buildWorld(latestLocations, latestPaths);
-        }))
-        .pipe(map(tiles => this.createWorld(tiles)));
+          const locationData = this.buildLocationData(latestLocations, latestPaths);
+          const locationPositions = this.buildLocationPositions(locationData);
+          const tiles = this.buildTiles(locationData);
+          const world = this.createWorld(tiles, locationPositions);
+          latestWorld = world;
+          return world;
+        })) : of(latestWorld);
+
+      const characters$ = charactersChanged ? this.gamesApi.getCharacters(this.gameId) : of(latestCharacters);
+
+      return combineLatest(world$, characters$).pipe(map(([world, characters]) => {
+        const game: IGame = {
+          world: world,
+          characters: characters
+        };
+
+        return game;
+      }));
     }));
   }
 
-  private buildWorld(locations: Location[], paths: Path[]): ITile[] {
+  private buildLocationData(locations: Location[], paths: Path[]): Map<LocationId, ILocationData> {
     const originLocationId = locations[0].id;
     const locationData = new Map<LocationId, ILocationData>(locations.map<[LocationId, ILocationData]>(location => [
       location.id,
@@ -71,25 +89,25 @@ export class GameService {
           const connectedLocation = locationData.get(path.to);
 
           switch (path.type) {
-          case 'West':
-            location.hasPathWest = true;
-            location.locationWest = connectedLocation;
-            break;
+            case 'West':
+              location.hasPathWest = true;
+              location.locationWest = connectedLocation;
+              break;
 
-          case 'East':
-            location.hasPathEast = true;
-            location.locationEast = connectedLocation;
-            break;
+            case 'East':
+              location.hasPathEast = true;
+              location.locationEast = connectedLocation;
+              break;
 
-          case 'North':
-            location.hasPathNorth = true;
-            location.locationNorth = connectedLocation;
-            break;
+            case 'North':
+              location.hasPathNorth = true;
+              location.locationNorth = connectedLocation;
+              break;
 
-          case 'South':
-            location.hasPathSouth = true;
-            location.locationSouth = connectedLocation;
-            break;
+            case 'South':
+              location.hasPathSouth = true;
+              location.locationSouth = connectedLocation;
+              break;
           }
         }
       }
@@ -101,6 +119,19 @@ export class GameService {
       this.traversePaths(originNeighborLocationId, originLocationId, directionFromParent, locationData, pathConnections);
     });
 
+    return locationData;
+  }
+
+  private buildLocationPositions(locationData: Map<LocationId, ILocationData>): Map<LocationId, IPosition> {
+    const locations = [...locationData.values()].map(this.convertToLocationEntry);
+    return new Map<LocationId, IPosition>(locations);
+  }
+
+  private convertToLocationEntry(location: ILocationData): [LocationId, IPosition] {
+    return [location.locationId, { x: location.x + GameService.tileSize / 2, y: location.y + GameService.tileSize / 2 }];
+  }
+
+  private buildTiles(locationData: Map<LocationId, ILocationData>): ITile[] {
     const tiles: ITile[] = [];
 
     locationData.forEach(location => {
@@ -282,7 +313,7 @@ export class GameService {
     }
   }
 
-  private createWorld(tiles: ITile[]): IWorld {
+  private createWorld(tiles: ITile[], locationPositions: Map<LocationId, IPosition>): IWorld {
     const leftValues = tiles.map(tile => tile.x);
     const rightValues = tiles.map(tile => tile.x + tile.width);
     const topValues = tiles.map(tile => tile.y);
@@ -297,14 +328,17 @@ export class GameService {
       y: minY,
       width: maxX - minX,
       height: maxY - minY,
-      tiles: tiles
+      tiles: tiles,
+      locationPositions: locationPositions
     }
   }
 }
 
 export type GameId = string;
 
-type LocationId = number;
+export type LocationId = number;
+
+export type CharacterId = number;
 
 interface ILocationData {
   locationId: LocationId;
@@ -326,12 +360,18 @@ interface ILocationData {
   locationSouth: ILocationData;
 }
 
+export interface IGame {
+  world: IWorld;
+  characters: Character[];
+}
+
 export interface IWorld {
   x: number;
   y: number;
   width: number;
   height: number;
   tiles: ITile[];
+  locationPositions: Map<LocationId, IPosition>;
 }
 
 export interface ITile {
@@ -340,6 +380,11 @@ export interface ITile {
   width: number;
   height: number;
   type: TileType;
+}
+
+export interface IPosition {
+  x: number;
+  y: number;
 }
 
 export type TileType =

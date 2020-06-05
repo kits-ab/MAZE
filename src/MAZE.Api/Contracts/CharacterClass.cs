@@ -1,4 +1,4 @@
-﻿namespace MAZE.Models
+﻿namespace MAZE.Api.Contracts
 {
     public enum CharacterClass
     {

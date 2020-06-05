@@ -7,10 +7,12 @@ namespace MAZE.Api
     public class AutomaticGameCreator : BackgroundService
     {
         private readonly GameService _gameService;
+        private readonly CharacterService _characterService;
 
-        public AutomaticGameCreator(GameService gameService)
+        public AutomaticGameCreator(GameService gameService, CharacterService characterService)
         {
             _gameService = gameService;
+            _characterService = characterService;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)

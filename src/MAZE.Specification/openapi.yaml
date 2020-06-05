@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 2.1.0
+  version: 3.0.0
   title: MAZE
   description: MAZE API
 
@@ -76,7 +76,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Character'
         '404':
-          $ref: '#/components/responses/GameNotFound'
+          description: Resource not found
+          content:
+            application/json:
+              examples:
+                GameNotFound:
+                  $ref: '#/components/examples/GameNotFound'
+                CharacterNotFound:
+                  $ref: '#/components/examples/CharacterNotFound'
+                LocationNotFound:
+                  $ref: '#/components/examples/LocationNotFound'
 
   /games/{gameId}/characters/{characterId}/teleport:
     post:
@@ -345,11 +354,11 @@ components:
           readOnly: false
           type: string
           enum:
-            - West
-            - East
-            - North
-            - South
-            - Portal
+            - west
+            - east
+            - north
+            - south
+            - portal
 
     ObstacleId:
       description: An obstacle identifier
@@ -399,7 +408,7 @@ components:
       example: 0
 
     CharacterClass:
-      description: The class of a character
+      description: The class of a character, controls the abilities a character can use
       type: string
       enum:
         - mage
@@ -413,22 +422,12 @@ components:
           readOnly: true
           allOf:
              - $ref: '#/components/schemas/CharacterId'
-        class:
+        characterClass:
           readOnly: true
           allOf:
              - $ref: '#/components/schemas/CharacterClass'
-        startLocation:
-          readOnly: true
-          allOf:
-            - $ref: '#/components/schemas/LocationId'
-        path:
-          type: array
-          items:
-            $ref: '#/components/schemas/PathId'
         location:
-          readOnly: true
-          allOf:
-            - $ref: '#/components/schemas/LocationId'
+          $ref: '#/components/schemas/LocationId'
         health:
           description: Number of seconds left before dying
           type: number
@@ -444,6 +443,13 @@ components:
           format: float
           minimum: 0
           readOnly: true
+      required:
+        - id
+        - class
+        - location
+        - health
+        - hasWeapon
+        - abilityCooldown
 
     Teleport:
       properties:
@@ -505,3 +511,9 @@ components:
     
     ObstacleNotFound:
       description: Obstacle not found
+
+    LocationNotFound:
+      description: Location not found
+
+    CharacterNotFound:
+      description: Character not found

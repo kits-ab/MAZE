@@ -20,7 +20,7 @@ namespace MAZE.Api.Hub
                 Context.Abort();
             }
 
-            Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths"));
+            Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths", "characters"));
 
             return base.OnConnectedAsync();
         }

@@ -16,6 +16,6 @@ namespace MAZE.Models
 
         public CharacterClass Class { get; }
 
-        public LocationId LocationId { get; }
+        public LocationId LocationId { get; set; }
     }
 }
