@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 3.0.0
+  version: 3.1.0
   title: MAZE
   description: MAZE API
 
@@ -313,6 +313,9 @@ components:
           default: true
         world:
           $ref: '#/components/schemas/WorldId'
+      required:
+        - id
+        - world
         
     WorldId:
       description: A world identifier
@@ -330,6 +333,8 @@ components:
           readOnly: true
           allOf:
             - $ref: '#/components/schemas/LocationId'
+      required:
+        - id
 
     PathId:
       description: A path identifier
@@ -359,6 +364,11 @@ components:
             - north
             - south
             - portal
+      required:
+        - id
+        - from
+        - to
+        - type
 
     ObstacleId:
       description: An obstacle identifier
@@ -385,6 +395,10 @@ components:
           items:
             $ref: '#/components/schemas/PathId'
           readOnly: true
+      required:
+        - id
+        - type
+        - blockedPaths
 
     TrapId:
       description: A trap identifier
@@ -401,6 +415,9 @@ components:
           readOnly: true
           allOf:
             - $ref: '#/components/schemas/LocationId'
+      required:
+        - id
+        - location
 
     CharacterId:
       description: A character identifier
@@ -445,7 +462,7 @@ components:
           readOnly: true
       required:
         - id
-        - class
+        - characterClass
         - location
         - health
         - hasWeapon
@@ -457,16 +474,23 @@ components:
           $ref: '#/components/schemas/CharacterId'
         to:
           $ref: '#/components/schemas/CharacterId'
+      required:
+        - target
+        - to
 
     Smash:
       properties:
         targetLocation: 
           $ref: '#/components/schemas/LocationId'
+      required:
+        - targetLocation
 
     Disarm:
       properties:
         trap:
           $ref: '#/components/schemas/TrapId'
+      required:
+        - trap
 
     Heal:
       properties:
@@ -474,6 +498,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CharacterId'
+      required:
+        - targets
 
   parameters:
     GameId:
