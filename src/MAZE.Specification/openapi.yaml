@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 3.1.2
+  version: 3.2.0
   title: MAZE
   description: MAZE API
 
@@ -51,17 +51,33 @@ paths:
           $ref: '#/components/responses/GameNotFound'
 
   /games/{gameId}/characters/{characterId}:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+      - $ref: '#/components/parameters/CharacterId'
+    get:
+      operationId: getCharacter
+      tags:
+        - games
+      responses:
+        '200':
+          description: Character
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              examples:
+                GameNotFound:
+                  $ref: '#/components/examples/GameNotFound'
+                CharacterNotFound:
+                  $ref: '#/components/examples/CharacterNotFound'
     patch:
       operationId: updateCharacter
       tags:
         - games
-      parameters:
-        - $ref: '#/components/parameters/GameId'
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/CharacterId'
       requestBody:
         required: true
         content:
