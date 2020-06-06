@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 3.2.0
+  version: 3.3.0
   title: MAZE
   description: MAZE API
 
@@ -447,13 +447,37 @@ components:
       example: 0
 
     CharacterClass:
-      description: The class of a character, controls the abilities a character can use
+      description: The class of a character, controls the abilities a character can use and obstacles he can clear
       type: string
       enum:
         - mage
         - theif
         - warrior
         - cleric
+
+    Direction:
+      description: A direction
+      type: string
+      enum:
+        - west
+        - east
+        - north
+        - south
+
+    Movement:
+      description: Possible movement for a character
+      properties:
+        location:
+          $ref: '#/components/schemas/LocationId'
+        direction:
+          $ref: '#/components/schemas/Direction'
+        numberOfPathsToTravel:
+          description: The number of paths traveled to perform the movement
+          type: integer
+      required:
+        - location
+        - direction
+        - numberOfPathsToTravel
 
     Character:
       properties:
@@ -467,6 +491,11 @@ components:
              - $ref: '#/components/schemas/CharacterClass'
         location:
           $ref: '#/components/schemas/LocationId'
+        availableMovements:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Movement'
         health:
           description: Number of seconds left before dying
           type: number
@@ -486,6 +515,7 @@ components:
         - id
         - characterClass
         - location
+        - availableMovements
         - health
         - hasWeapon
         - abilityCooldown
