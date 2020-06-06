@@ -1,4 +1,4 @@
-﻿using MAZE.Api.Hub;
+﻿using MAZE.Api.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -49,8 +49,9 @@ namespace MAZE.Api
             services.AddTransient<LocationService>();
             services.AddTransient<PathService>();
             services.AddTransient<ObstacleService>();
-            services.AddTransient<EventService>();
+            services.AddTransient<GameEventService>();
             services.AddTransient<CharacterService>();
+            services.AddTransient<AvailableMovementsFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,7 +74,7 @@ namespace MAZE.Api
                 }
 
                 options.AllowAnyHeader()
-                    .WithMethods("GET", "POST")
+                    .AllowAnyMethod()
                     .AllowCredentials();
             });
 

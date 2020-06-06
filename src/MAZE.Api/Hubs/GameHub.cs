@@ -2,9 +2,9 @@
 using MAZE.Api.Contracts;
 using Microsoft.AspNetCore.SignalR;
 
-namespace MAZE.Api.Hub
+namespace MAZE.Api.Hubs
 {
-    public class GameHub : Microsoft.AspNetCore.SignalR.Hub
+    public class GameHub : Hub
     {
         public override Task OnConnectedAsync()
         {

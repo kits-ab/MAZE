@@ -75,7 +75,7 @@ export class GameService {
     originLocationPosition.y = 0;
     originLocationPosition.visited = true;
 
-    const pathConnections = new Map<LocationId, [LocationId, Path.TypeEnum][]>();
+    const pathConnections = new Map<LocationId, [LocationId, PathType][]>();
     paths.forEach(path => {
       if (path.type === 'west' || path.type === 'east' || path.type === 'north' || path.type === 'south') {
         if (!pathConnections.has(path.from)) {
@@ -271,27 +271,27 @@ export class GameService {
     return tiles;
   }
 
-  private traversePaths(locationId: LocationId, parentLocationId: LocationId, directionFromParent: Path.TypeEnum, locationData: Map<LocationId, ILocationData>, pathConnections: Map<LocationId, [LocationId, Path.TypeEnum][]>): void {
+  private traversePaths(locationId: LocationId, parentLocationId: LocationId, directionFromParent: PathType, locationData: Map<LocationId, ILocationData>, pathConnections: Map<LocationId, [LocationId, PathType][]>): void {
     const location = locationData.get(locationId);
     const parentLocation = locationData.get(parentLocationId);
     location.visited = true;
     switch (directionFromParent) {
-    case Path.TypeEnum.West:
+      case 'west':
       location.x = parentLocation.x - GameService.tileSize;
       location.y = parentLocation.y;
       break;
 
-    case Path.TypeEnum.East:
+      case 'east':
       location.x = parentLocation.x + GameService.tileSize;
       location.y = parentLocation.y;
       break;
 
-    case Path.TypeEnum.North:
+      case 'north':
       location.x = parentLocation.x;
       location.y = parentLocation.y - GameService.tileSize;
       break;
 
-    case Path.TypeEnum.South:
+      case 'south':
       location.x = parentLocation.x;
       location.y = parentLocation.y + GameService.tileSize;
       break;
@@ -392,3 +392,5 @@ export type TileType =
   'wall-left' | 'wall-right' | 'wall-top' | 'wall-bottom' |
   'wall-corner-inner-left-bottom' | 'wall-corner-inner-left-top' | 'wall-corner-inner-right-bottom' | 'wall-corner-inner-right-top' |
   'wall-corner-outer-left-bottom' | 'wall-corner-outer-left-top' | 'wall-corner-outer-right-bottom' | 'wall-corner-outer-right-top';
+
+type PathType = 'west' | 'east' | 'north' | 'south' | 'portal';

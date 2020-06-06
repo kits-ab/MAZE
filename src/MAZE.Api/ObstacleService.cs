@@ -14,9 +14,9 @@ namespace MAZE.Api
     {
         private readonly GameRepository _gameRepository;
         private readonly EventRepository _eventRepository;
-        private readonly EventService _eventService;
+        private readonly GameEventService _eventService;
 
-        public ObstacleService(GameRepository gameRepository, EventRepository eventRepository, EventService eventService)
+        public ObstacleService(GameRepository gameRepository, EventRepository eventRepository, GameEventService eventService)
         {
             _gameRepository = gameRepository;
             _eventRepository = eventRepository;

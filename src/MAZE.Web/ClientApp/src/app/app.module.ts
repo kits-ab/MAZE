@@ -7,7 +7,6 @@ import { RouterModule } from '@angular/router';
 import { ApiModule, BASE_PATH } from '@kokitotsos/maze-client-angular';
 
 import { AppComponent } from './app.component';
-import { NavMenuComponent } from './nav-menu/nav-menu.component';
 import { HomeComponent } from './home/home.component';
 import { GameComponent } from './game/game.component';
 import { environment } from '../environments/environment';
@@ -17,7 +16,6 @@ import { GameWithControlComponent } from './game-with-control/game-with-control.
 @NgModule({
   declarations: [
     AppComponent,
-    NavMenuComponent,
     HomeComponent,
     GameComponent,
     GameControlComponent,

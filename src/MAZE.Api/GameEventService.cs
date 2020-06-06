@@ -1,16 +1,16 @@
 ﻿using System.Threading.Tasks;
 using MAZE.Api.Contracts;
-using MAZE.Api.Hub;
+using MAZE.Api.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using GameId = System.String;
 
 namespace MAZE.Api
 {
-    public class EventService
+    public class GameEventService
     {
         private readonly IHubContext<GameHub> _hubContext;
 
-        public EventService(IHubContext<GameHub> hubContext)
+        public GameEventService(IHubContext<GameHub> hubContext)
         {
             _hubContext = hubContext;
         }

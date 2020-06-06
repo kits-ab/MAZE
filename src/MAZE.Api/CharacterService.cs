@@ -15,13 +15,15 @@ namespace MAZE.Api
     {
         private readonly GameRepository _gameRepository;
         private readonly EventRepository _eventRepository;
-        private readonly EventService _eventService;
+        private readonly GameEventService _gameEventService;
+        private readonly AvailableMovementsFactory _availableMovementsFactory;
 
-        public CharacterService(GameRepository gameRepository, EventRepository eventRepository, EventService eventService)
+        public CharacterService(GameRepository gameRepository, EventRepository eventRepository, GameEventService gameEventService, AvailableMovementsFactory availableMovementsFactory)
         {
             _gameRepository = gameRepository;
             _eventRepository = eventRepository;
-            _eventService = eventService;
+            _gameEventService = gameEventService;
+            _availableMovementsFactory = availableMovementsFactory;
         }
 
         public Result<IEnumerable<Character>, ReadGameError> GetCharacters(GameId gameId)
@@ -30,7 +32,7 @@ namespace MAZE.Api
             return result.Map(
                 game =>
                 {
-                    var characters = game.World.Characters.Select(Convert);
+                    var characters = game.World.Characters.Select(character => CreateCharacter(character, game.World));
 
                     return new Result<IEnumerable<Character>, ReadGameError>(characters);
                 },
@@ -50,7 +52,7 @@ namespace MAZE.Api
                         return ReadCharacterError.CharacterNotFound;
                     }
 
-                    return Convert(character);
+                    return CreateCharacter(character, game.World);
                 },
                 readGameError => ConvertToReadCharacterError(readGameError));
         }
@@ -75,16 +77,11 @@ namespace MAZE.Api
 
                     _eventRepository.AddEvent(gameId, new CharacterMoved(characterId, newLocationId));
 
-                    await _eventService.NotifyWorldUpdatedAsync(gameId, "characters");
+                    await _gameEventService.NotifyWorldUpdatedAsync(gameId, "characters");
 
                     return VoidResult<MoveCharacterError>.Success;
                 },
                 readGameError => Task.FromResult(new VoidResult<MoveCharacterError>(ConvertToMoveCharacterError(readGameError))));
-        }
-
-        private static Character Convert(Models.Character character)
-        {
-            return new Character(character.Id, character.LocationId, Convert(character.Class));
         }
 
         private static CharacterClass Convert(Models.CharacterClass characterClass)
@@ -92,6 +89,9 @@ namespace MAZE.Api
             return characterClass switch
             {
                 Models.CharacterClass.Mage => CharacterClass.Mage,
+                Models.CharacterClass.Theif => CharacterClass.Theif,
+                Models.CharacterClass.Warrior => CharacterClass.Warrior,
+                Models.CharacterClass.Cleric => CharacterClass.Cleric,
                 _ => throw new ArgumentOutOfRangeException(nameof(characterClass), characterClass, null)
             };
         }
@@ -112,6 +112,12 @@ namespace MAZE.Api
                 ReadGameError.NotFound => MoveCharacterError.GameNotFound,
                 _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
             };
+        }
+
+        private Character CreateCharacter(Models.Character character, Models.World world)
+        {
+            var availableMovements = _availableMovementsFactory.GetAvailableMovements(character.LocationId, world);
+            return new Character(character.Id, character.LocationId, Convert(character.Class), availableMovements);
         }
     }
 }

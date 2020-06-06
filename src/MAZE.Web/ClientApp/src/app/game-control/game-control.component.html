@@ -1,7 +1,22 @@
-<ng-container *ngIf="characters != null">
-  <ng-container *ngFor="let character of characters">
-    <div *ngIf="getMovements(character.id, 'east') != null">
-      <button type="button" *ngFor="let movement of getMovements(character.id, 'east')" [disabled]="movement.locationId == null" (click)="move(character.id, movement.locationId)">{{movement.numberOfSteps}}</button>
-    </div>
-  </ng-container>
+<ng-container *ngFor="let characterControl of getCharacterControls()">
+  <div>
+    {{characterControl.characterClass}} west:
+    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'west'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
+  </div>
+  <div>
+    {{characterControl.characterClass}} east:
+    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'east'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
+  </div>
+  <div>
+    {{characterControl.characterClass}} north:
+    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'north'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
+  </div>
+  <div>
+    {{characterControl.characterClass}} south:
+    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'south'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
+  </div>
+  <div>
+    {{characterControl.characterClass}} portal:
+    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'portal'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">Use portal</button>
+  </div>
 </ng-container>

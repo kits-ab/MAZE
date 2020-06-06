@@ -39,6 +39,24 @@ namespace MAZE.Api.Controllers
                 });
         }
 
+        [HttpGet("{characterId}")]
+        public IActionResult Get(GameId gameId, CharacterId characterId)
+        {
+            var result = _characterService.GetCharacter(gameId, characterId);
+
+            return result.Map<IActionResult>(
+                Ok,
+                readGameError =>
+                {
+                    return readGameError switch
+                    {
+                        ReadCharacterError.GameNotFound => NotFound("Game not found"),
+                        ReadCharacterError.CharacterNotFound => NotFound("Character not found"),
+                        _ => throw new ArgumentOutOfRangeException(nameof(readGameError), readGameError, null)
+                    };
+                });
+        }
+
         [HttpPatch("{characterId}")]
         public async Task<IActionResult> Patch(GameId gameId, CharacterId characterId, JsonPatchDocument<Character> patch)
         {
