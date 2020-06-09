@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 3.3.1
+  version: 3.3.2
   title: MAZE
   description: MAZE API
 
@@ -456,7 +456,7 @@ components:
       type: string
       enum:
         - mage
-        - theif
+        - rogue
         - warrior
         - cleric
 
