@@ -97,10 +97,7 @@ namespace MAZE.Api.Controllers
                             MoveCharacterError.GameNotFound => NotFound("Game not found"),
                             MoveCharacterError.CharacterNotFound => NotFound("Character not found"),
                             MoveCharacterError.LocationNotFound => NotFound("Location not found"),
-                            MoveCharacterError.NoPathBetweenLocations => BadRequest("No path to new location"),
-                            MoveCharacterError.PathNotInAStraightLine => BadRequest("No straight path to new location"),
-                            MoveCharacterError.BlockedByObstacle => BadRequest("Path blocked by obstacle"),
-                            MoveCharacterError.BlockedByCharacter => BadRequest("Path blocked by character"),
+                            MoveCharacterError.NotAnAvailableMovement => BadRequest("Not an available movement"),
                             _ => throw new ArgumentOutOfRangeException(nameof(moveCharacterError), moveCharacterError, null)
                         };
                     });

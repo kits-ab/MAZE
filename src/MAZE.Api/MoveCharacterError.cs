@@ -5,9 +5,6 @@
         GameNotFound,
         CharacterNotFound,
         LocationNotFound,
-        NoPathBetweenLocations,
-        PathNotInAStraightLine,
-        BlockedByObstacle,
-        BlockedByCharacter,
+        NotAnAvailableMovement,
     }
 }

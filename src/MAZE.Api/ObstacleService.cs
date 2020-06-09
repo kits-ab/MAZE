@@ -51,7 +51,7 @@ namespace MAZE.Api
 
                     _eventRepository.AddEvent(gameId, new ObstacleRemoved(obstacleId));
 
-                    await _eventService.NotifyWorldUpdatedAsync(gameId, "locations", "paths", "obstacles");
+                    await _eventService.NotifyWorldUpdatedAsync(gameId, "locations", "paths", "obstacles", "characters");
 
                     return VoidResult<RemoveObstacleError>.Success;
                 },

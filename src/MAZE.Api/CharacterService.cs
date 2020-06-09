@@ -75,6 +75,13 @@ namespace MAZE.Api
                         return MoveCharacterError.LocationNotFound;
                     }
 
+                    var availableMovements =
+                        _availableMovementsFactory.GetAvailableMovements(character.LocationId, game.World);
+                    if (availableMovements.All(movement => movement.Location != newLocationId))
+                    {
+                        return MoveCharacterError.NotAnAvailableMovement;
+                    }
+
                     _eventRepository.AddEvent(gameId, new CharacterMoved(characterId, newLocationId));
 
                     await _gameEventService.NotifyWorldUpdatedAsync(gameId, "characters");
