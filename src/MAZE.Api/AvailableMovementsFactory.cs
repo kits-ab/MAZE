@@ -13,7 +13,7 @@ namespace MAZE.Api
             var blockedPathIds = world.Obstacles.SelectMany(obstacle => obstacle.BlockedPathIds).ToHashSet();
             var blockedLocations = world.Characters.Select(character => character.LocationId).ToHashSet();
 
-            var pathsFromOriginalLocation = world.Paths.Where(path => path.From == atLocationId && path.IsDiscovered && !blockedPathIds.Contains(path.Id)).ToList();
+            var pathsFromOriginalLocation = world.Paths.Where(path => path.From == atLocationId && path.IsDiscovered && !blockedPathIds.Contains(path.Id) && !blockedLocations.Contains(path.To)).ToList();
 
             // Add portals
             foreach (var portalPath in pathsFromOriginalLocation.Where(path => path.Type == Models.PathType.Portal))

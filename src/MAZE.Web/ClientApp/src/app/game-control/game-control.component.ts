@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { GamesService, CharacterClass, PatchOperation } from '@kokitotsos/maze-client-angular';
+import { GamesService, CharacterClass, PatchOperation, Movement } from '@kokitotsos/maze-client-angular';
 import { LocationId, CharacterId, GameId } from '../game.service';
 import { ActivatedRoute } from '@angular/router';
 import { GameEventService } from '../game-event.service';
@@ -10,60 +10,91 @@ import { GameEventService } from '../game-event.service';
   styleUrls: ['./game-control.component.scss']
 })
 export class GameControlComponent implements OnInit {
-  private static readonly maxNumberOfSteps = 5;
+  private static readonly maxNumberOfSteps = 4;
   readonly gameId: GameId = this.activatedRoute.snapshot.params.id;
   private readonly gameEventService = new GameEventService(this.gameId);
-  characterControls = new Map<CharacterId, ICharacterControl>();
+  actionControls = new Map<Action, IActionControl>();
+  actionCanBeUsed = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly gameApi: GamesService) { }
 
   ngOnInit() {
+    this.actionControls = new Map<Action, IActionControl>();
+    this.addActionControl('north');
+    this.addActionControl('west');
+    this.addActionControl('east');    
+    this.addActionControl('south');
+    this.addActionControl('portal');
+
     this.gameEventService.getWorldUpdates().subscribe(worldUpdate => {
       if (worldUpdate.potentiallyChangedResources.includes('characters')) {
         this.gameApi.getCharacters(this.gameId).subscribe(characters => {
-          characters.forEach(character => {
-            if (!this.characterControls.has(character.id)) {
-              const newMovements = new Map<MovementType, LocationId[]>();
-              newMovements.set('west', new Array<LocationId>(GameControlComponent.maxNumberOfSteps));
-              newMovements.set('east', new Array<LocationId>(GameControlComponent.maxNumberOfSteps));
-              newMovements.set('north', new Array<LocationId>(GameControlComponent.maxNumberOfSteps));
-              newMovements.set('south', new Array<LocationId>(GameControlComponent.maxNumberOfSteps));
-              newMovements.set('portal', new Array<LocationId>(1));
-              const newCharacterControl: ICharacterControl = {
-                characterId: character.id,
-                characterClass: character.characterClass,
-                isAvailable: true,
-                movements: newMovements
-              };
-              this.characterControls.set(newCharacterControl.characterId, newCharacterControl);
-            }
-            const characterControl = this.characterControls.get(character.id);
-            characterControl.movements.forEach(movements => {
-              for (let i = 0; i < movements.length; i++) {
-                movements[i] = null;
+          // Reset movements
+          this.actionControls.forEach(actionControl => {
+            actionControl.characterControls.forEach(characterControl => {
+              for (let i = 0; i < characterControl.movements.length; i++) {
+                characterControl.movements[i] = null;
               }
-            })
+            });
+          });
+
+          characters.forEach(character => {
+            if (!this.actionControls.get('west').characterControls.has(character.id)) {
+              this.addCharacterControls(character.id, character.characterClass);
+            }
+            
             character.availableMovements
               .filter(movement => movement.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps)
               .forEach(movement => {
-                characterControl.movements.get(movement.type)[movement.numberOfPathsToTravel - 1] = movement.location;
+                const actionControl = this.actionControls.get(movement.type);
+                const characterControl = actionControl.characterControls.get(character.id);
+                characterControl.movements[movement.numberOfPathsToTravel - 1] = movement.location;
               });
 
-            characterControl.isAvailable = true;
+            this.actionCanBeUsed = true;
           });
         });
       }
     });
   }
 
-  getCharacterControls(): ICharacterControl[] {
-    return [...this.characterControls.values()];
+  private addActionControl(action: Action): void {
+    const newActionControl: IActionControl = {
+      action: action,
+      characterControls: new Map<CharacterId, ICharacterControl>()
+    };
+    this.actionControls.set(newActionControl.action, newActionControl);
   }
 
-  getLocationIds(characterControl: ICharacterControl, movementType: MovementType): LocationId[] {
-    return characterControl.movements.get(movementType);
+  private addCharacterControls(characterId: CharacterId, characterClass: CharacterClass): void {
+    this.addCharacterControl(characterId, characterClass, 'west');
+    this.addCharacterControl(characterId, characterClass, 'east');
+    this.addCharacterControl(characterId, characterClass, 'north');
+    this.addCharacterControl(characterId, characterClass, 'south');
+    this.addCharacterControl(characterId, characterClass, 'portal');
+  }
+
+  private addCharacterControl(characterId: CharacterId, characterClass: CharacterClass, action: Action): void {
+    const newCharacterControl: ICharacterControl = {
+      characterId: characterId,
+      characterClass: characterClass,
+      movements: new Array<LocationId>(action == 'portal' ? 1 : GameControlComponent.maxNumberOfSteps)
+    };
+    this.actionControls.get(action).characterControls.set(newCharacterControl.characterId, newCharacterControl);
+  }
+
+  getActionControls(): IActionControl[] {
+    return [...this.actionControls.values()];
+  }
+
+  getCharacterControls(actionControl: IActionControl): ICharacterControl[] {
+    return [...actionControl.characterControls.values()];
+  }
+
+  getLocationIds(characterControl: ICharacterControl): LocationId[] {
+    return characterControl.movements;
   }
 
   move(characterId: CharacterId, newLocationId: LocationId): void {
@@ -72,7 +103,7 @@ export class GameControlComponent implements OnInit {
       path: 'location',
       value: newLocationId
     };
-    this.characterControls.get(characterId).isAvailable = false;
+    this.actionCanBeUsed = false;
     this.gameApi.updateCharacter(this.gameId, characterId, [patchOperation])
       .subscribe(
         _ => {
@@ -84,11 +115,15 @@ export class GameControlComponent implements OnInit {
   }
 }
 
+interface IActionControl {
+  action: Action;
+  characterControls: Map<CharacterId, ICharacterControl>;
+}
+
 interface ICharacterControl {
   characterId: CharacterId;
   characterClass: CharacterClass;
-  isAvailable: boolean;
-  movements: Map<MovementType, LocationId[]>;
+  movements: LocationId[];
 }
 
-type MovementType = 'west' | 'east' | 'north' | 'south' | 'portal';
+type Action = 'west' | 'east' | 'north' | 'south' | 'portal';

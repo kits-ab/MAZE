@@ -1,4 +1,5 @@
-﻿using MAZE.Models;
+﻿using System.Linq;
+using MAZE.Models;
 
 namespace MAZE.Events
 {
@@ -14,7 +15,10 @@ namespace MAZE.Events
         public override void ApplyToWorld(World world)
         {
             world.Characters.Add(Character);
-            world.DiscoverLocation(Character.LocationId);
+            if (!world.Locations.Single(location => location.Id == Character.LocationId).IsDiscovered)
+            {
+                world.DiscoverLocation(Character.LocationId);
+            }
         }
     }
 }

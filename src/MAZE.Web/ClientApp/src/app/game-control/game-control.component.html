@@ -1,22 +1,8 @@
-<ng-container *ngFor="let characterControl of getCharacterControls()">
-  <div>
-    {{characterControl.characterClass}} west:
-    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'west'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
+<div class="action-controls">
+  <div class="action-control" [ngClass]="actionControl.action" *ngFor="let actionControl of getActionControls()">
+    <div class="character-control" *ngFor="let characterControl of getCharacterControls(actionControl)">
+      <span class="action-name" [ngClass]="characterControl.characterClass">{{characterControl.characterClass}} {{actionControl.action}}:</span>
+      <button type="button" *ngFor="let locationId of getLocationIds(characterControl); index as i;" [disabled]="locationId == null || !actionCanBeUsed" (click)="move(characterControl.characterId, locationId)">{{ i + 1}} step{{i > 0 ? 's' : ''}}</button>
+    </div>
   </div>
-  <div>
-    {{characterControl.characterClass}} east:
-    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'east'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
-  </div>
-  <div>
-    {{characterControl.characterClass}} north:
-    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'north'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
-  </div>
-  <div>
-    {{characterControl.characterClass}} south:
-    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'south'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">{{i + 1}}</button>
-  </div>
-  <div>
-    {{characterControl.characterClass}} portal:
-    <button type="button" *ngFor="let locationId of getLocationIds(characterControl, 'portal'); index as i;" [disabled]="locationId == null || !characterControl.isAvailable" (click)="move(characterControl.characterId, locationId)">Use portal</button>
-  </div>
-</ng-container>
+</div>

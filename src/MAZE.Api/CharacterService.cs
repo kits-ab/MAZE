@@ -96,7 +96,7 @@ namespace MAZE.Api
             return characterClass switch
             {
                 Models.CharacterClass.Mage => CharacterClass.Mage,
-                Models.CharacterClass.Theif => CharacterClass.Theif,
+                Models.CharacterClass.Rogue => CharacterClass.Rogue,
                 Models.CharacterClass.Warrior => CharacterClass.Warrior,
                 Models.CharacterClass.Cleric => CharacterClass.Cleric,
                 _ => throw new ArgumentOutOfRangeException(nameof(characterClass), characterClass, null)

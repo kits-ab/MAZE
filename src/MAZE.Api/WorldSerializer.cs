@@ -12,12 +12,12 @@ namespace MAZE.Api
     public class WorldSerializer
     {
         private readonly int _locationColor = Color.White.ToArgb();
-        private readonly int _wizardStartLocationColor = Color.FromArgb(255, 128, 128, 255).ToArgb();
+        private readonly int _mageStartLocationColor = Color.FromArgb(255, 128, 128, 255).ToArgb();
         private readonly int _rogueStartLocationColor = Color.FromArgb(255, 128, 255, 128).ToArgb();
         private readonly int _warriorStartLocationColor = Color.FromArgb(255, 255, 128, 128).ToArgb();
         private readonly int _clericStartLocationColor = Color.FromArgb(255, 255, 255, 128).ToArgb();
         private readonly int _pathColor = Color.FromArgb(255, 200, 200, 200).ToArgb();
-        private readonly int _wizardBlockedPathColor = Color.FromArgb(255, 0, 0, 255).ToArgb();
+        private readonly int _mageBlockedPathColor = Color.FromArgb(255, 0, 0, 255).ToArgb();
         private readonly int _rogueBlockedPathColor = Color.FromArgb(255, 0, 255, 0).ToArgb();
         private readonly int _warriorBlockedPathColor = Color.FromArgb(255, 255, 0, 0).ToArgb();
         private readonly int _clericBlockedPathColor = Color.FromArgb(255, 255, 255, 0).ToArgb();
@@ -44,7 +44,7 @@ namespace MAZE.Api
                     {
                         var color = image.GetPixel(x, y).ToArgb();
                         if (color == _locationColor
-                            || color == _wizardStartLocationColor
+                            || color == _mageStartLocationColor
                             || color == _rogueStartLocationColor
                             || color == _warriorStartLocationColor
                             || color == _clericStartLocationColor)
@@ -52,9 +52,31 @@ namespace MAZE.Api
                             var location = new Location(locationCounter++);
                             locations.Add((x, y), location);
 
-                            if (color == _wizardStartLocationColor)
+                            CharacterClass? characterClassToCreate = null;
+
+                            if (color == _mageStartLocationColor)
                             {
-                                var character = new Character(characterCounter++, CharacterClass.Mage, location.Id);
+                                characterClassToCreate = CharacterClass.Mage;
+                            }
+
+                            if (color == _rogueStartLocationColor)
+                            {
+                                characterClassToCreate = CharacterClass.Rogue;
+                            }
+
+                            if (color == _warriorStartLocationColor)
+                            {
+                                characterClassToCreate = CharacterClass.Warrior;
+                            }
+
+                            if (color == _clericStartLocationColor)
+                            {
+                                characterClassToCreate = CharacterClass.Cleric;
+                            }
+
+                            if (characterClassToCreate.HasValue)
+                            {
+                                var character = new Character(characterCounter++, characterClassToCreate.Value, location.Id);
                                 characters.Add(character);
                             }
                         }
@@ -82,7 +104,7 @@ namespace MAZE.Api
                         var pathY = locationY + yOffset;
                         var pathCandidateColor = image.GetPixel(pathX, pathY).ToArgb();
                         if ((pathCandidateColor == _pathColor ||
-                             pathCandidateColor == _wizardBlockedPathColor ||
+                             pathCandidateColor == _mageBlockedPathColor ||
                              pathCandidateColor == _rogueBlockedPathColor ||
                              pathCandidateColor == _warriorBlockedPathColor ||
                              pathCandidateColor == _clericBlockedPathColor)
@@ -90,7 +112,7 @@ namespace MAZE.Api
                         {
                             var pathId = pathCounter++;
                             paths.Add(new Path(pathId, locationInformation.Value.Id, neighborLocation.Id, pathType));
-                            if (pathCandidateColor == _wizardBlockedPathColor)
+                            if (pathCandidateColor == _mageBlockedPathColor)
                             {
                                 AddBlockedPoint(pathId, pathX, pathY, ObstacleType.ForceField);
                             }

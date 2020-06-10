@@ -3,7 +3,7 @@
     public enum CharacterClass
     {
         Mage,
-        Theif,
+        Rogue,
         Warrior,
         Cleric,
     }
