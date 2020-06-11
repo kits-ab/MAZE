@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 3.3.2
+  version: 4.0.0
   title: MAZE
   description: MAZE API
 
@@ -78,6 +78,8 @@ paths:
       operationId: updateCharacter
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       requestBody:
         required: true
         content:
@@ -108,6 +110,8 @@ paths:
       operationId: teleport
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
         - $ref: '#/components/parameters/CharacterId'
@@ -128,6 +132,8 @@ paths:
       operationId: smash
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
         - $ref: '#/components/parameters/CharacterId'
@@ -148,6 +154,8 @@ paths:
       operationId: disarm
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
         - $ref: '#/components/parameters/CharacterId'
@@ -168,6 +176,8 @@ paths:
       operationId: heal
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
         - $ref: '#/components/parameters/CharacterId'
@@ -188,6 +198,8 @@ paths:
       operationId: getTraps
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
@@ -245,6 +257,8 @@ paths:
       operationId: removeObstacle
       tags:
         - games
+      security:
+        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
         - $ref: '#/components/parameters/ObstacleId'
@@ -570,6 +584,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/ObstacleId'
+
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   responses:
     GameNotFound:
