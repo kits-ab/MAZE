@@ -34,13 +34,6 @@ namespace MAZE.Api
             services.AddSignalR()
                 .AddAzureSignalR();
 
-#if DEBUG
-            if (_environment.IsDevelopment())
-            {
-                services.AddHostedService<AutomaticGameCreator>();
-            }
-#endif
-
             services.AddTransient<WorldSerializer>();
             services.AddSingleton<EventRepository>();
             services.AddSingleton<GameRepository>();

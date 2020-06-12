@@ -11,7 +11,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "gameWithControl/0/FallenMaster",
+      "launchUrl": "gameCreator/true",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

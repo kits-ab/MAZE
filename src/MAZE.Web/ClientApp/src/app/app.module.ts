@@ -12,6 +12,7 @@ import { GameComponent } from './game/game.component';
 import { environment } from '../environments/environment';
 import { GameControlComponent } from './game-control/game-control.component';
 import { GameWithControlComponent } from './game-with-control/game-with-control.component';
+import { GameCreatorComponent } from './game-creator/game-creator.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { GameWithControlComponent } from './game-with-control/game-with-control.
     HomeComponent,
     GameComponent,
     GameControlComponent,
-    GameWithControlComponent
+    GameWithControlComponent,
+    GameCreatorComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -28,6 +30,8 @@ import { GameWithControlComponent } from './game-with-control/game-with-control.
     FormsModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
+      { path: 'gameCreator', component: GameCreatorComponent },
+      { path: 'gameCreator/:withControl', component: GameCreatorComponent },
       { path: 'game/:id', component: GameComponent },
       { path: 'gameControl/:id/:playerName', component: GameControlComponent },
       { path: 'gameWithControl/:id/:playerName', component: GameWithControlComponent }

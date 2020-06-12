@@ -365,7 +365,6 @@ components:
         world:
           $ref: '#/components/schemas/WorldId'
       required:
-        - id
         - world
         
     WorldId:
@@ -389,7 +388,6 @@ components:
           type: string
           example: "John Doe"
       required:
-        - id
         - name
 
     LocationId:
@@ -403,8 +401,6 @@ components:
           readOnly: true
           allOf:
             - $ref: '#/components/schemas/LocationId'
-      required:
-        - id
 
     PathId:
       description: A path identifier
@@ -440,7 +436,6 @@ components:
           allOf:
             - $ref: '#/components/schemas/PathType'
       required:
-        - id
         - from
         - to
         - type
@@ -471,7 +466,6 @@ components:
             $ref: '#/components/schemas/PathId'
           readOnly: true
       required:
-        - id
         - type
         - blockedPaths
 
@@ -491,7 +485,6 @@ components:
           allOf:
             - $ref: '#/components/schemas/LocationId'
       required:
-        - id
         - location
 
     CharacterId:
@@ -556,7 +549,6 @@ components:
           minimum: 0
           readOnly: true
       required:
-        - id
         - characterClass
         - location
         - availableMovements
