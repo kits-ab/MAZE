@@ -2,7 +2,7 @@
 using MAZE.Api.Contracts;
 using MAZE.Api.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using GameId = System.String;
+using GameId = System.Int32;
 
 namespace MAZE.Api
 {
@@ -17,7 +17,7 @@ namespace MAZE.Api
 
         public async Task NotifyWorldUpdatedAsync(GameId gameId, params string[] potentiallyChangedResources)
         {
-            await _hubContext.Clients.Groups(gameId).SendAsync(nameof(WorldUpdated), new WorldUpdated(potentiallyChangedResources));
+            await _hubContext.Clients.Groups(gameId.ToString()).SendAsync(nameof(WorldUpdated), new WorldUpdated(potentiallyChangedResources));
         }
     }
 }

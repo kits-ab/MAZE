@@ -29,8 +29,8 @@ import { GameWithControlComponent } from './game-with-control/game-with-control.
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'game/:id', component: GameComponent },
-      { path: 'gameControl/:id', component: GameControlComponent },
-      { path: 'gameWithControl/:id', component: GameWithControlComponent }
+      { path: 'gameControl/:id/:playerName', component: GameControlComponent },
+      { path: 'gameWithControl/:id/:playerName', component: GameWithControlComponent }
     ])
   ],
   providers: [{ provide: BASE_PATH, useValue: environment.apiUrl }],

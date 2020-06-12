@@ -24,17 +24,17 @@ namespace MAZE.Events
 
         public List<Obstacle> Obstacles { get; }
 
-        public override void ApplyToWorld(World world)
+        public override void ApplyToGame(Game game)
         {
-            if (world.Id != null)
+            if (game.World.Id != null)
             {
                 throw new InvalidOperationException("Cannot reload a world");
             }
 
-            world.Id = Id;
-            world.Locations.AddRange(Locations);
-            world.Paths.AddRange(Paths);
-            world.Obstacles.AddRange(Obstacles);
+            game.World.Id = Id;
+            game.World.Locations.AddRange(Locations);
+            game.World.Paths.AddRange(Paths);
+            game.World.Obstacles.AddRange(Obstacles);
         }
     }
 }

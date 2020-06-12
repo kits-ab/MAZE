@@ -11,8 +11,8 @@ import { GameEventService } from '../game-event.service';
 })
 export class GameControlComponent implements OnInit {
   private static readonly maxNumberOfSteps = 4;
-  readonly gameId: GameId = this.activatedRoute.snapshot.params.id;
-  private readonly gameEventService = new GameEventService(this.gameId);
+  private readonly gameId: GameId = this.activatedRoute.snapshot.params.id;
+  private readonly gameEventService = new GameEventService(this.gameId, this.activatedRoute.snapshot.params.playerName);
   actionControls = new Map<Action, IActionControl>();
   actionCanBeUsed = false;
 

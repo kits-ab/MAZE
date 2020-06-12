@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GenericDataStructures;
 using MAZE.Api.Contracts;
-using GameId = System.String;
+using GameId = System.Int32;
 
 namespace MAZE.Api
 {

@@ -1,7 +1,6 @@
-﻿using System;
-using GenericDataStructures;
+﻿using GenericDataStructures;
 using MAZE.Models;
-using GameId = System.String;
+using GameId = System.Int32;
 
 namespace MAZE
 {
@@ -18,7 +17,7 @@ namespace MAZE
 
         public GameId CreateGame()
         {
-            var newGameId = _gameCounter.ToString();
+            var newGameId = _gameCounter;
             _gameCounter++;
 
             return newGameId;
@@ -31,23 +30,16 @@ namespace MAZE
             return result.Map<Result<Game, ReadGameError>>(
                 events =>
                 {
-                    var world = new World();
+                    var game = new Game(id);
 
                     foreach (var @event in events)
                     {
-                        @event.ApplyToWorld(world);
+                        @event.ApplyToGame(game);
                     }
 
-                    return new Game(id, world);
+                    return game;
                 },
-                readEventsError =>
-                {
-                    return readEventsError switch
-                    {
-                        ReadEventsError.GameNotFound => ReadGameError.NotFound,
-                        _ => throw new ArgumentOutOfRangeException(nameof(readEventsError), readEventsError, null)
-                    };
-                });
+                readGameError => readGameError);
         }
     }
 }

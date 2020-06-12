@@ -1,17 +1,19 @@
-﻿using GameId = System.String;
+﻿using System.Collections.Generic;
+using GameId = System.Int32;
 
 namespace MAZE.Models
 {
     public class Game
     {
-        public Game(GameId id, World world)
+        public Game(GameId id)
         {
             Id = id;
-            World = world;
         }
 
         public GameId Id { get; }
 
-        public World World { get; }
+        public World World { get; } = new World();
+
+        public List<Player> Players { get; } = new List<Player>();
     }
 }

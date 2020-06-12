@@ -17,9 +17,9 @@ namespace MAZE.Events
 
         public int NewLocationId { get; }
 
-        public override void ApplyToWorld(World world)
+        public override void ApplyToGame(Game game)
         {
-            var characterToMove = world.Characters.Single(character => character.Id == CharacterId);
+            var characterToMove = game.World.Characters.Single(character => character.Id == CharacterId);
             characterToMove.LocationId = NewLocationId;
         }
     }

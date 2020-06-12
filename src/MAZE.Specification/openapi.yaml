@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 4.0.0
+  version: 4.1.0
   title: MAZE
   description: MAZE API
 
@@ -30,6 +30,23 @@ paths:
                 $ref: '#/components/schemas/Game'
         '404':
           description: World not found
+
+  /games/{gameId}/players:
+    get:
+      operationId: getPlayers
+      tags:
+        - games
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Player'
 
   /games/{gameId}/characters:
     get:
@@ -198,8 +215,6 @@ paths:
       operationId: getTraps
       tags:
         - games
-      security:
-        - bearerAuthentication: []
       parameters:
         - $ref: '#/components/parameters/GameId'
       responses:
@@ -335,8 +350,8 @@ components:
 
     GameId:
       description: A game identifier
-      type: string
-      example: "0"
+      type: number
+      example: 0
 
     Game:
       properties:
@@ -359,9 +374,28 @@ components:
       pattern: '^[a-zA-Z]+$'
       example: "Castle"
 
+    PlayerId:
+      description: A player identifier
+      type: number
+      example: 0
+
+    Player:
+      properties:
+        id:
+          readOnly: true
+          allOf:
+           - $ref: '#/components/schemas/PlayerId'
+        name:
+          type: string
+          example: "John Doe"
+      required:
+        - id
+        - name
+
     LocationId:
       description: A location identifier
       type: number
+      example: 0
 
     Location:
       properties:

@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using GameId = System.String;
+using GameId = System.Int32;
 using WorldId = System.String;
 
 namespace MAZE.Api.Contracts

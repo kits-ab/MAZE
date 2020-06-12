@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using GenericDataStructures;
 using MAZE.Api.Contracts;
 using MAZE.Events;
-using GameId = System.String;
+using GameId = System.Int32;
 using ObstacleId = System.Int32;
 
 namespace MAZE.Api
@@ -38,7 +38,7 @@ namespace MAZE.Api
                 readGameError => readGameError);
         }
 
-        public async Task<VoidResult<RemoveObstacleError>> RemoveObstacleAsync(string gameId, ObstacleId obstacleId)
+        public async Task<VoidResult<RemoveObstacleError>> RemoveObstacleAsync(GameId gameId, ObstacleId obstacleId)
         {
             var result = _gameRepository.GetGame(gameId);
             return await result.Map(

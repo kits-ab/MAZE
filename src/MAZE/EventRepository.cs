@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GenericDataStructures;
 using Newtonsoft.Json;
-using GameId = System.String;
+using GameId = System.Int32;
 
 namespace MAZE
 {
@@ -11,11 +11,11 @@ namespace MAZE
     {
         private readonly Dictionary<GameId, List<Event>> _events = new Dictionary<GameId, List<Event>>();
 
-        public Result<IEnumerable<Event>, ReadEventsError> GetEvents(GameId gameId)
+        public Result<IEnumerable<Event>, ReadGameError> GetEvents(GameId gameId)
         {
             if (!_events.ContainsKey(gameId))
             {
-                return ReadEventsError.GameNotFound;
+                return ReadGameError.NotFound;
             }
 
             return GetEventClones(gameId).ToList();
@@ -34,7 +34,7 @@ namespace MAZE
         private IEnumerable<Event> GetEventClones(GameId gameId)
         {
             // Clone events to replicate the behavior of a database instead of allowing to modify stored data
-            foreach (var @event in _events[gameId])
+            foreach (var @event in _events[gameId].ToList())
             {
                 var json = JsonConvert.SerializeObject(@event);
                 var clonedEvent = JsonConvert.DeserializeObject(json, @event.GetType());

@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Game = MAZE.Api.Contracts.Game;
-using GameId = System.String;
+using GameId = System.Int32;
 
 namespace MAZE.Api.Controllers
 {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using GenericDataStructures;
-using GameId = System.String;
+using GameId = System.Int32;
 using Location = MAZE.Api.Contracts.Location;
 
 namespace MAZE.Api

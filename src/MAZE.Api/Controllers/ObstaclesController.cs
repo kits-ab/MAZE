@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using GameId = System.String;
+using GameId = System.Int32;
 using ObstacleId = System.Int32;
 
 namespace MAZE.Api.Controllers

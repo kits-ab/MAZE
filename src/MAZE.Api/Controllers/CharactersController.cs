@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Operations;
 using Microsoft.AspNetCore.Mvc;
 using CharacterId = System.Int32;
-using GameId = System.String;
+using GameId = System.Int32;
 using LocationId = System.Int32;
 
 namespace MAZE.Api.Controllers

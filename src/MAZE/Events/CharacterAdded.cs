@@ -12,12 +12,12 @@ namespace MAZE.Events
 
         public Character Character { get; }
 
-        public override void ApplyToWorld(World world)
+        public override void ApplyToGame(Game game)
         {
-            world.Characters.Add(Character);
-            if (!world.Locations.Single(location => location.Id == Character.LocationId).IsDiscovered)
+            game.World.Characters.Add(Character);
+            if (!game.World.Locations.Single(location => location.Id == Character.LocationId).IsDiscovered)
             {
-                world.DiscoverLocation(Character.LocationId);
+                game.World.DiscoverLocation(Character.LocationId);
             }
         }
     }

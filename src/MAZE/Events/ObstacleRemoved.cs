@@ -13,25 +13,25 @@ namespace MAZE.Events
 
         public ObstacleId ObstacleId { get; }
 
-        public override void ApplyToWorld(World world)
+        public override void ApplyToGame(Game game)
         {
-            var obstacleToRemove = world.Obstacles.Single(obstacle => obstacle.Id == ObstacleId);
-            world.Obstacles.Remove(obstacleToRemove);
+            var obstacleToRemove = game.World.Obstacles.Single(obstacle => obstacle.Id == ObstacleId);
+            game.World.Obstacles.Remove(obstacleToRemove);
 
             foreach (var unblockedPathId in obstacleToRemove.BlockedPathIds)
             {
-                var unblockedPath = world.Paths.Single(path => path.Id == unblockedPathId);
-                var fromLocation = world.Locations.Single(location => location.Id == unblockedPath.From);
-                var toLocation = world.Locations.Single(location => location.Id == unblockedPath.To);
+                var unblockedPath = game.World.Paths.Single(path => path.Id == unblockedPathId);
+                var fromLocation = game.World.Locations.Single(location => location.Id == unblockedPath.From);
+                var toLocation = game.World.Locations.Single(location => location.Id == unblockedPath.To);
 
                 if (!fromLocation.IsDiscovered)
                 {
-                    world.DiscoverLocation(fromLocation.Id);
+                    game.World.DiscoverLocation(fromLocation.Id);
                 }
 
                 if (!toLocation.IsDiscovered)
                 {
-                    world.DiscoverLocation(toLocation.Id);
+                    game.World.DiscoverLocation(toLocation.Id);
                 }
             }
         }

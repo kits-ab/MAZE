@@ -6,9 +6,15 @@ import { environment } from '../environments/environment';
 export class GameEventService {
   private readonly worldUpdates = new Subject<IWorldUpdated>();
 
-  constructor(gameId: GameId) {
+  constructor(gameId: GameId, playerName?: string) {
+    let connectionUrl = `${environment.apiUrl}/gameEvents?gameId=${gameId}`;
+
+    if (playerName != null) {
+      connectionUrl += `&playerName=${encodeURIComponent(playerName)}`
+    }
+
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/gameEvents?gameId=${gameId}`)
+      .withUrl(connectionUrl)
       .build();
 
     connection.on('WorldUpdated', (worldUpdated: IWorldUpdated) => {
