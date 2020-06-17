@@ -14,7 +14,7 @@ export class GameControlComponent implements OnInit {
   private readonly gameId: GameId = this.activatedRoute.snapshot.params.id;
   private readonly gameEventService = new GameEventService(this.gameId, this.activatedRoute.snapshot.params.playerName);
   actionControls = new Map<Action, IActionControl>();
-  actionCanBeUsed = false;
+  awaitingNewControls = true;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -27,6 +27,10 @@ export class GameControlComponent implements OnInit {
     this.addActionControl('east');    
     this.addActionControl('south');
     this.addActionControl('portal');
+
+    this.gameEventService.getToken().subscribe(newToken => {
+      this.gameApi.defaultHeaders = this.gameApi.defaultHeaders.set('Authorization', `Bearer ${newToken}`);
+    });
 
     this.gameEventService.getWorldUpdates().subscribe(worldUpdate => {
       if (worldUpdate.potentiallyChangedResources.includes('characters')) {
@@ -53,7 +57,7 @@ export class GameControlComponent implements OnInit {
                 characterControl.movements[movement.numberOfPathsToTravel - 1] = movement.location;
               });
 
-            this.actionCanBeUsed = true;
+            this.awaitingNewControls = false;
           });
         });
       }
@@ -85,6 +89,10 @@ export class GameControlComponent implements OnInit {
     this.actionControls.get(action).characterControls.set(newCharacterControl.characterId, newCharacterControl);
   }
 
+  actionsCanBeUsed(): boolean {
+    return this.gameApi.defaultHeaders.has('Authorization') && !this.awaitingNewControls;
+  }
+
   getActionControls(): IActionControl[] {
     return [...this.actionControls.values()];
   }
@@ -103,7 +111,7 @@ export class GameControlComponent implements OnInit {
       path: 'location',
       value: newLocationId
     };
-    this.actionCanBeUsed = false;
+    this.awaitingNewControls = true;
     this.gameApi.updateCharacter(this.gameId, characterId, [patchOperation])
       .subscribe(
         _ => {

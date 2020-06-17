@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 4.1.1
+  version: 4.2.0
   title: MAZE
   description: MAZE API
 
@@ -110,6 +110,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Character'
+        '401':
+          $ref: '#/components/responses/AuthorizationNeeded'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Resource not found
           content:
@@ -141,6 +145,10 @@ paths:
       responses:
         '204':
           description: Teleport successful
+        '401':
+          $ref: '#/components/responses/AuthorizationNeeded'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/GameNotFound'
 
@@ -163,6 +171,10 @@ paths:
       responses:
         '204':
           description: Smash successful
+        '401':
+          $ref: '#/components/responses/AuthorizationNeeded'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/GameNotFound'
 
@@ -185,6 +197,10 @@ paths:
       responses:
         '204':
           description: Disarm successful
+        '401':
+          $ref: '#/components/responses/AuthorizationNeeded'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/GameNotFound'
 
@@ -207,6 +223,10 @@ paths:
       responses:
         '204':
           description: Heal successful
+        '401':
+          $ref: '#/components/responses/AuthorizationNeeded'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/GameNotFound'
 
@@ -280,6 +300,10 @@ paths:
       responses:
         '204':
           description: Obstacle removed
+        '401':
+          $ref: '#/components/responses/AuthorizationNeeded'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Resource not found
           content:
@@ -624,6 +648,12 @@ components:
         application/json:
           example:
             - $ref: '#/components/examples/GameNotFound'
+
+    AuthorizationNeeded:
+      description: You need to identify yourself
+
+    Forbidden:
+      description: You are not allowed to execute this call
 
   examples:
     GameNotFound:

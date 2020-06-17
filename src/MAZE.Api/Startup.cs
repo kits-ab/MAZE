@@ -1,24 +1,24 @@
-﻿using MAZE.Api.Hubs;
+﻿using System.Text;
+using MAZE.Api.Hubs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 
 namespace MAZE.Api
 {
     public class Startup
     {
-        private readonly IHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
-        public Startup(IConfiguration configuration, IHostEnvironment environment)
+        public Startup(IConfiguration configuration)
         {
-            _environment = environment;
-            Configuration = configuration;
+            _configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -33,6 +33,22 @@ namespace MAZE.Api
 
             services.AddSignalR()
                 .AddAzureSignalR();
+
+            var tokenSecret = _configuration.GetValue<string>("TokenSecret");
+            var key = Encoding.ASCII.GetBytes(tokenSecret);
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = false,
+                    };
+                });
+
+            services.AddTransient<TokenFactory>();
 
             services.AddTransient<WorldSerializer>();
             services.AddSingleton<EventRepository>();
@@ -80,6 +96,7 @@ namespace MAZE.Api
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseAzureSignalR(routes =>

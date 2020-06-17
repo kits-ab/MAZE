@@ -15,15 +15,17 @@ namespace MAZE.Api.Hubs
         private const string JoinedGamesKey = "joined game ids";
 
         private readonly GameService _gameService;
+        private readonly TokenFactory _tokenFactory;
         private readonly ILogger<GameHub> _logger;
 
-        public GameHub(GameService gameService, ILogger<GameHub> logger)
+        public GameHub(GameService gameService, TokenFactory tokenFactory, ILogger<GameHub> logger)
         {
             _gameService = gameService;
+            _tokenFactory = tokenFactory;
             _logger = logger;
         }
 
-        public override Task OnConnectedAsync()
+        public override async Task OnConnectedAsync()
         {
             if (Context.GetHttpContext().Request.Query.TryGetValue("gameId", out var gameIdsStringValues))
             {
@@ -37,12 +39,14 @@ namespace MAZE.Api.Hubs
                 foreach (var gameIdStringValue in gameIdsStringValues)
                 {
                     var gameId = int.Parse(gameIdStringValue);
-                    Groups.AddToGroupAsync(Context.ConnectionId, gameIdStringValue);
+                    await Groups.AddToGroupAsync(Context.ConnectionId, gameIdStringValue);
                     if (playerName != null)
                     {
                         var result = _gameService.JoinGame(gameId, playerName);
                         if (result.TryGetSuccessValue(out var player))
                         {
+                            var token = _tokenFactory.CreateJwtToken(gameId, player.Id);
+                            await Clients.Caller.SendAsync(nameof(NewToken), new NewToken(token));
                             joinedGames.Add(new JoinedGame(gameId, player.Id));
                         }
                         else
@@ -62,9 +66,7 @@ namespace MAZE.Api.Hubs
                 Context.Abort();
             }
 
-            Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths", "characters"));
-
-            return base.OnConnectedAsync();
+            await Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths", "characters"));
         }
 
         public override Task OnDisconnectedAsync(Exception exception)

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using MAZE.Api.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Operations;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +59,7 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpPatch("{characterId}")]
+        [Authorize]
         public async Task<IActionResult> Patch(GameId gameId, CharacterId characterId, JsonPatchDocument<Character> patch)
         {
             if (patch.Operations.Count != 1)

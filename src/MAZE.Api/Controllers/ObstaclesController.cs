@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GameId = System.Int32;
 using ObstacleId = System.Int32;
@@ -35,6 +36,7 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpDelete("{obstacleId}")]
+        [Authorize]
         public async Task<IActionResult> Delete(GameId gameId, ObstacleId obstacleId)
         {
             var result = await _obstacleService.RemoveObstacleAsync(gameId, obstacleId);

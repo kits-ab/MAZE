@@ -334,7 +334,7 @@ export class GameService {
   }
 }
 
-export type GameId = string;
+export type GameId = number;
 
 export type LocationId = number;
 
