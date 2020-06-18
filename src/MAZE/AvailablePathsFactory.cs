@@ -34,21 +34,19 @@ namespace MAZE
 
             foreach (var direction in directionalPathTypes)
             {
-                foreach (var path in pathsFromOriginalLocation.Where(pathCandidate => pathCandidate.Type == direction))
+                foreach (var initialPath in pathsFromOriginalLocation.Where(path => path.Type == direction))
                 {
                     var paths = new List<Path>();
-                    int? nextLocationId = path.To;
-                    while (nextLocationId != null)
+                    var nextPath = initialPath;
+                    while (nextPath != null)
                     {
-                        paths.Add(path);
-                        nextLocationId = world.Paths.Where(pathCandidate =>
-                                pathCandidate.From == nextLocationId.Value &&
-                                pathCandidate.Type == direction &&
-                                pathCandidate.IsDiscovered &&
-                                !blockedPathIds.Contains(pathCandidate.Id) &&
-                                !blockedLocations.Contains(pathCandidate.To))
-                            .Select(pathCandidate => (int?)pathCandidate.To)
-                            .SingleOrDefault();
+                        paths.Add(nextPath);
+                        nextPath = world.Paths.SingleOrDefault(pathCandidate =>
+                            pathCandidate.From == nextPath.To &&
+                            pathCandidate.Type == direction &&
+                            pathCandidate.IsDiscovered &&
+                            !blockedPathIds.Contains(pathCandidate.Id) &&
+                            !blockedLocations.Contains(pathCandidate.To));
                     }
 
                     if (paths.Any())
