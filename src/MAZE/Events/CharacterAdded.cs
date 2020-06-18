@@ -17,7 +17,7 @@ namespace MAZE.Events
             game.World.Characters.Add(Character);
             if (!game.World.Locations.Single(location => location.Id == Character.LocationId).IsDiscovered)
             {
-                game.World.DiscoverLocation(Character.LocationId);
+                Explorer.Discover(Character.LocationId, game.World);
             }
         }
     }

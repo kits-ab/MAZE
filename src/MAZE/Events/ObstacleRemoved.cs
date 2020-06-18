@@ -26,12 +26,12 @@ namespace MAZE.Events
 
                 if (!fromLocation.IsDiscovered)
                 {
-                    game.World.DiscoverLocation(fromLocation.Id);
+                    Explorer.Discover(fromLocation.Id, game.World);
                 }
 
                 if (!toLocation.IsDiscovered)
                 {
-                    game.World.DiscoverLocation(toLocation.Id);
+                    Explorer.Discover(toLocation.Id, game.World);
                 }
             }
         }

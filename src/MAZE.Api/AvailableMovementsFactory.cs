@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using MAZE.Api.Contracts;
 using LocationId = System.Int32;
 
@@ -10,47 +9,13 @@ namespace MAZE.Api
     {
         public IEnumerable<Movement> GetAvailableMovements(LocationId atLocationId, Models.World world)
         {
-            var blockedPathIds = world.Obstacles.SelectMany(obstacle => obstacle.BlockedPathIds).ToHashSet();
-            var blockedLocations = world.Characters.Select(character => character.LocationId).ToHashSet();
-
-            var pathsFromOriginalLocation = world.Paths.Where(path => path.From == atLocationId && path.IsDiscovered && !blockedPathIds.Contains(path.Id) && !blockedLocations.Contains(path.To)).ToList();
-
-            // Add portals
-            foreach (var portalPath in pathsFromOriginalLocation.Where(path => path.Type == Models.PathType.Portal))
+            foreach (var paths in AvailablePathsFactory.GetAvailablePaths(atLocationId, world))
             {
-                if (!blockedLocations.Contains(portalPath.To))
+                var pathDistance = 1;
+                foreach (var path in paths)
                 {
-                    yield return new Movement(portalPath.To, 1, PathType.Portal);
-                }
-            }
-
-            // Add directional movement
-            var directionalPathTypes = new[]
-            {
-                Models.PathType.West,
-                Models.PathType.East,
-                Models.PathType.North,
-                Models.PathType.South,
-            };
-
-            foreach (var direction in directionalPathTypes)
-            {
-                foreach (var path in pathsFromOriginalLocation.Where(pathCandidate => pathCandidate.Type == direction))
-                {
-                    int? nextLocationId = path.To;
-                    var pathsTraversed = 1;
-                    while (nextLocationId != null)
-                    {
-                        yield return new Movement(nextLocationId.Value, pathsTraversed++, Convert(direction));
-                        nextLocationId = world.Paths.Where(pathCandidate =>
-                                pathCandidate.From == nextLocationId.Value &&
-                                pathCandidate.Type == direction &&
-                                pathCandidate.IsDiscovered &&
-                                !blockedPathIds.Contains(pathCandidate.Id) &&
-                                !blockedLocations.Contains(pathCandidate.To))
-                            .Select(pathCandidate => (int?)pathCandidate.To)
-                            .SingleOrDefault();
-                    }
+                    yield return new Movement(path.To, pathDistance, Convert(path.Type));
+                    pathDistance++;
                 }
             }
         }
