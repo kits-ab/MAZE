@@ -12,7 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MAZE", "MAZE\MAZE.csproj", "{CEE8D0FA-A20F-4C60-B0B2-A713EA30F06C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MAZE", "MAZE\MAZE.csproj", "{CEE8D0FA-A20F-4C60-B0B2-A713EA30F06C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MAZE.Persisting", "MAZE.Persisting\MAZE.Persisting.csproj", "{2F4CE932-E70C-49DF-8DF0-8BB183B31DF2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{CEE8D0FA-A20F-4C60-B0B2-A713EA30F06C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEE8D0FA-A20F-4C60-B0B2-A713EA30F06C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEE8D0FA-A20F-4C60-B0B2-A713EA30F06C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F4CE932-E70C-49DF-8DF0-8BB183B31DF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F4CE932-E70C-49DF-8DF0-8BB183B31DF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F4CE932-E70C-49DF-8DF0-8BB183B31DF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F4CE932-E70C-49DF-8DF0-8BB183B31DF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
