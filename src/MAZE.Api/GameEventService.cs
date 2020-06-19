@@ -2,7 +2,7 @@
 using MAZE.Api.Contracts;
 using MAZE.Api.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using GameId = System.Int32;
+using GameId = System.String;
 
 namespace MAZE.Api
 {

@@ -1,19 +1,27 @@
-﻿using MAZE.Models;
+﻿using System.Linq;
+using MAZE.Models;
 
 namespace MAZE.Events
 {
     public class PlayerJoined : Event
     {
-        public PlayerJoined(Player newPlayer)
+        public PlayerJoined(string newPlayerName)
         {
-            NewPlayer = newPlayer;
+            NewPlayerName = newPlayerName;
         }
 
-        public Player NewPlayer { get; }
+        public string NewPlayerName { get; }
 
         public override void ApplyToGame(Game game)
         {
-            game.Players.Add(NewPlayer);
+            var takenPlayerIds = game.Players.Select(player => player.Id).ToHashSet();
+            var newPlayerId = 0;
+            while (takenPlayerIds.Contains(newPlayerId))
+            {
+                newPlayerId++;
+            }
+
+            game.Players.Add(new Player(newPlayerId, NewPlayerName));
         }
     }
 }

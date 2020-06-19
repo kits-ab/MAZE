@@ -34,6 +34,8 @@ namespace MAZE.Api
             services.AddSignalR()
                 .AddAzureSignalR();
 
+            services.Configure<EventStoreSettings>(_configuration.GetSection("EventStore"));
+
             var tokenSecret = _configuration.GetValue<string>("TokenSecret");
             var key = Encoding.ASCII.GetBytes(tokenSecret);
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

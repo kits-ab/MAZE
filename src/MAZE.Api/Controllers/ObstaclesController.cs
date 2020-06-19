@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using GameId = System.Int32;
+using GameId = System.String;
 using ObstacleId = System.Int32;
 
 namespace MAZE.Api.Controllers
@@ -19,9 +19,9 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(GameId gameId)
+        public async Task<IActionResult> Get(GameId gameId)
         {
-            var result = _obstacleService.GetObstacles(gameId);
+            var result = await _obstacleService.GetObstaclesAsync(gameId);
 
             return result.Map<IActionResult>(
                 Ok,

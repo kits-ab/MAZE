@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GenericDataStructures;
 using MAZE.Api.Contracts;
-using GameId = System.Int32;
+using GameId = System.String;
 
 namespace MAZE.Api
 {
@@ -16,9 +17,9 @@ namespace MAZE.Api
             _gameService = gameService;
         }
 
-        public Result<IEnumerable<Path>, ReadGameError> GetPaths(GameId gameId)
+        public async Task<Result<IEnumerable<Path>, ReadGameError>> GetPathsAsync(GameId gameId)
         {
-            var result = _gameService.GetGame(gameId);
+            var result = await _gameService.GetGameAsync(gameId);
 
             return result.Map(
                 game =>

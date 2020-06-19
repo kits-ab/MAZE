@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GenericDataStructures;
-using GameId = System.Int32;
+using GameId = System.String;
 using Location = MAZE.Api.Contracts.Location;
 
 namespace MAZE.Api
@@ -15,9 +16,9 @@ namespace MAZE.Api
             _gameRepository = gameRepository;
         }
 
-        public Result<IEnumerable<Location>, ReadGameError> GetDiscoveredLocations(GameId gameId)
+        public async Task<Result<IEnumerable<Location>, ReadGameError>> GetDiscoveredLocationsAsync(GameId gameId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAsync(gameId);
 
             return result.Map(
                 game =>

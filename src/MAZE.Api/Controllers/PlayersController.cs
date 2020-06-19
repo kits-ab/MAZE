@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using GameId = System.Int32;
+using GameId = System.String;
 
 namespace MAZE.Api.Controllers
 {
@@ -16,9 +17,9 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(GameId gameId)
+        public async Task<IActionResult> Get(GameId gameId)
         {
-            var result = _gameService.GetPlayers(gameId);
+            var result = await _gameService.GetPlayersAsync(gameId);
 
             return result.Map<IActionResult>(
                 Ok,

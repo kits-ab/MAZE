@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 4.2.0
+  version: 4.2.1
   title: MAZE
   description: MAZE API
 
@@ -374,8 +374,7 @@ components:
 
     GameId:
       description: A game identifier
-      type: number
-      example: 0
+      type: string
 
     Game:
       properties:

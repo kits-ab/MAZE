@@ -6,7 +6,7 @@ using GenericDataStructures;
 using MAZE.Api.Contracts;
 using MAZE.Events;
 using CharacterId = System.Int32;
-using GameId = System.Int32;
+using GameId = System.String;
 using LocationId = System.Int32;
 
 namespace MAZE.Api
@@ -26,9 +26,9 @@ namespace MAZE.Api
             _availableMovementsFactory = availableMovementsFactory;
         }
 
-        public Result<IEnumerable<Character>, ReadGameError> GetCharacters(GameId gameId)
+        public async Task<Result<IEnumerable<Character>, ReadGameError>> GetCharactersAsync(GameId gameId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAsync(gameId);
             return result.Map(
                 game =>
                 {
@@ -39,9 +39,9 @@ namespace MAZE.Api
                 readGameError => readGameError);
         }
 
-        public Result<Character, ReadCharacterError> GetCharacter(GameId gameId, CharacterId characterId)
+        public async Task<Result<Character, ReadCharacterError>> GetCharacterAsync(GameId gameId, CharacterId characterId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAsync(gameId);
             return result.Map<Result<Character, ReadCharacterError>>(
                 game =>
                 {
@@ -59,10 +59,11 @@ namespace MAZE.Api
 
         public async Task<VoidResult<MoveCharacterError>> MoveCharacterAsync(GameId gameId, CharacterId characterId, LocationId newLocationId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAndVersionAsync(gameId);
             return await result.Map(
-                async game =>
+                async gameAndVersion =>
                 {
+                    var (game, version) = gameAndVersion;
                     var character = game.World.Characters.SingleOrDefault(characterCandidate => characterCandidate.Id == characterId);
 
                     if (character == null)
@@ -82,7 +83,7 @@ namespace MAZE.Api
                         return MoveCharacterError.NotAnAvailableMovement;
                     }
 
-                    _eventRepository.AddEvent(gameId, new CharacterMoved(characterId, newLocationId));
+                    await _eventRepository.AddEventAsync(gameId, new CharacterMoved(characterId, newLocationId), version);
 
                     await _gameEventService.NotifyWorldUpdatedAsync(gameId, "characters");
 

@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using GameId = System.Int32;
+using GameId = System.String;
 using PlayerId = System.Int32;
 
 namespace MAZE.Api

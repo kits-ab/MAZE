@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using GameId = System.Int32;
+using GameId = System.String;
 
 namespace MAZE.Models
 {

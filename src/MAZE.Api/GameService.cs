@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GenericDataStructures;
+using MAZE.Api.Contracts;
 using MAZE.Events;
 using Microsoft.Extensions.Hosting;
-using GameId = System.Int32;
+using GameId = System.String;
 using PlayerId = System.Int32;
 using WorldId = System.String;
 
@@ -25,7 +27,7 @@ namespace MAZE.Api
             _eventRepository = eventRepository;
         }
 
-        public Result<Contracts.Game, NewGameError> NewGame(WorldId worldId)
+        public async Task<Result<Game, NewGameError>> NewGameAsync(WorldId worldId)
         {
             var worldFilePath = System.IO.Path.Combine(_environment.ContentRootPath, "Worlds", $"{worldId}.png");
 
@@ -40,18 +42,15 @@ namespace MAZE.Api
                 gameCreationEvents = _worldSerializer.Deserialize(worldId, worldStream).ToList();
             }
 
-            var newGameId = _gameRepository.CreateGame();
+            var newGameId = Guid.NewGuid().ToString();
 
-            foreach (var @event in gameCreationEvents)
+            await _eventRepository.AddEventsAsync(newGameId, gameCreationEvents);
+
+            var result = await _gameRepository.GetGameAsync(newGameId);
+
+            if (result.TryGetSuccessValue(out var game))
             {
-                _eventRepository.AddEvent(newGameId, @event);
-            }
-
-            var result = _gameRepository.GetGame(newGameId);
-
-            if (result.TryGetSuccessValue(out var newGame))
-            {
-                return Convert(newGame);
+                return Convert(game);
             }
             else
             {
@@ -59,33 +58,41 @@ namespace MAZE.Api
             }
         }
 
-        public Result<Contracts.Game, ReadGameError> GetGame(GameId id)
+        public async Task<Result<Game, ReadGameError>> GetGameAsync(GameId id)
         {
-            var result = _gameRepository.GetGame(id);
+            var result = await _gameRepository.GetGameAsync(id);
 
-            return result.Map<Result<Contracts.Game, ReadGameError>>(
+            return result.Map<Result<Game, ReadGameError>>(
                 game => Convert(game),
                 readGameError => readGameError);
         }
 
-        public Result<Contracts.Player, ReadGameError> JoinGame(GameId gameId, string playerName)
+        public async Task<Result<Player, ReadGameError>> JoinGameAsync(GameId gameId, string playerName)
         {
-            var joinGameEvents = _eventRepository.GetEvents(gameId);
-            return joinGameEvents.Map<Result<Contracts.Player, ReadGameError>>(
-                gameEvents =>
+            var result = await _gameRepository.GetGameAndVersionAsync(gameId);
+            return await result.Map(
+                async gameAndVersion =>
                 {
-                    var numberOfJoinGameEvents = gameEvents.Count(gameEvent => gameEvent is PlayerJoined);
-                    var newPlayer = new Models.Player(numberOfJoinGameEvents, playerName);
-                    var playerJoined = new PlayerJoined(newPlayer);
-                    _eventRepository.AddEvent(gameId, playerJoined);
-                    return Convert(newPlayer);
+                    var (_, version) = gameAndVersion;
+                    var playerJoined = new PlayerJoined(playerName);
+                    await _eventRepository.AddEventAsync(gameId, playerJoined, version);
+
+                    var updatedResult = await _gameRepository.GetGameAsync(gameId);
+
+                    return updatedResult.Map(
+                        updatedGame =>
+                        {
+                            var newPlayer = updatedGame.Players.Single(player => player.Name == playerName);
+                            return Convert(newPlayer);
+                        },
+                        readGameError => new Result<Player, ReadGameError>(readGameError));
                 },
-                readGameError => readGameError);
+                readGameError => Task.FromResult(new Result<Player, ReadGameError>(readGameError)));
         }
 
-        public Result<IEnumerable<Contracts.Player>, ReadGameError> GetPlayers(GameId gameId)
+        public async Task<Result<IEnumerable<Player>, ReadGameError>> GetPlayersAsync(GameId gameId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAsync(gameId);
             return result.Map(
                 game =>
                 {
@@ -96,27 +103,28 @@ namespace MAZE.Api
                 readGameError => readGameError);
         }
 
-        public VoidResult<LeaveGameError> LeaveGame(GameId gameId, PlayerId playerId)
+        public async Task<VoidResult<LeaveGameError>> LeaveGameAsync(GameId gameId, PlayerId playerId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAndVersionAsync(gameId);
 
-            return result.Map(
-                game =>
+            return await result.Map(
+                async gameAndVersion =>
                 {
+                    var (game, version) = gameAndVersion;
                     if (game.Players.All(player => player.Id != playerId))
                     {
                         return LeaveGameError.PlayerNotFound;
                     }
 
                     var playerLeft = new PlayerLeft(playerId);
-                    _eventRepository.AddEvent(gameId, playerLeft);
+                    await _eventRepository.AddEventAsync(gameId, playerLeft, version);
                     return VoidResult<LeaveGameError>.Success;
                 },
                 readGameError =>
                 {
                     return readGameError switch
                     {
-                        ReadGameError.NotFound => LeaveGameError.GameNotFound,
+                        ReadGameError.NotFound => Task.FromResult(new VoidResult<LeaveGameError>(LeaveGameError.GameNotFound)),
                         _ => throw new ArgumentOutOfRangeException(nameof(readGameError), readGameError, null)
                     };
                 });

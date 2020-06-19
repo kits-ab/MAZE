@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Game = MAZE.Api.Contracts.Game;
-using GameId = System.Int32;
+using GameId = System.String;
 
 namespace MAZE.Api.Controllers
 {
@@ -17,14 +18,14 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post(Game game)
+        public async Task<IActionResult> Post(Game game)
         {
             if (game.World == null)
             {
                 return BadRequest("A world is required when creating a game");
             }
 
-            var result = _gameService.NewGame(game.World);
+            var result = await _gameService.NewGameAsync(game.World);
 
             return result.Map<IActionResult>(
                 newGame =>
@@ -42,9 +43,9 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpGet("{gameId}")]
-        public IActionResult Get(GameId gameId)
+        public async Task<IActionResult> Get(GameId gameId)
         {
-            var result = _gameService.GetGame(gameId);
+            var result = await _gameService.GetGameAsync(gameId);
 
             return result.Map<IActionResult>(
                 Ok,

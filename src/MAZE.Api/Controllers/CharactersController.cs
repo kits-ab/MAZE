@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Operations;
 using Microsoft.AspNetCore.Mvc;
 using CharacterId = System.Int32;
-using GameId = System.Int32;
+using GameId = System.String;
 using LocationId = System.Int32;
 
 namespace MAZE.Api.Controllers
@@ -24,9 +24,9 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(GameId gameId)
+        public async Task<IActionResult> Get(GameId gameId)
         {
-            var result = _characterService.GetCharacters(gameId);
+            var result = await _characterService.GetCharactersAsync(gameId);
 
             return result.Map<IActionResult>(
                 Ok,
@@ -41,9 +41,9 @@ namespace MAZE.Api.Controllers
         }
 
         [HttpGet("{characterId}")]
-        public IActionResult Get(GameId gameId, CharacterId characterId)
+        public async Task<IActionResult> Get(GameId gameId, CharacterId characterId)
         {
-            var result = _characterService.GetCharacter(gameId, characterId);
+            var result = await _characterService.GetCharacterAsync(gameId, characterId);
 
             return result.Map<IActionResult>(
                 Ok,
@@ -84,30 +84,32 @@ namespace MAZE.Api.Controllers
 
                 var moveResult = await _characterService.MoveCharacterAsync(gameId, characterId, locationId);
 
-                return moveResult.Map(
-                    () =>
+                return await moveResult.Map<Task<IActionResult>>(
+                    async () =>
                     {
-                        var result = _characterService.GetCharacter(gameId, characterId);
+                        var result = await _characterService.GetCharacterAsync(gameId, characterId);
                         return result.Map<IActionResult>(
                             Ok,
                             _ => Conflict("Character was unavailable after movement"));
                     },
-                    moveCharacterError =>
-                    {
-                        return moveCharacterError switch
-                        {
-                            MoveCharacterError.GameNotFound => NotFound("Game not found"),
-                            MoveCharacterError.CharacterNotFound => NotFound("Character not found"),
-                            MoveCharacterError.LocationNotFound => NotFound("Location not found"),
-                            MoveCharacterError.NotAnAvailableMovement => BadRequest("Not an available movement"),
-                            _ => throw new ArgumentOutOfRangeException(nameof(moveCharacterError), moveCharacterError, null)
-                        };
-                    });
+                    moveCharacterError => Task.FromResult(CreateErrorResponse(moveCharacterError)));
             }
             else
             {
                 return BadRequest("Unsupported operation");
             }
+        }
+
+        private IActionResult CreateErrorResponse(MoveCharacterError error)
+        {
+            return error switch
+            {
+                MoveCharacterError.GameNotFound => NotFound("Game not found"),
+                MoveCharacterError.CharacterNotFound => NotFound("Character not found"),
+                MoveCharacterError.LocationNotFound => NotFound("Location not found"),
+                MoveCharacterError.NotAnAvailableMovement => BadRequest("Not an available movement"),
+                _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
+            };
         }
     }
 }

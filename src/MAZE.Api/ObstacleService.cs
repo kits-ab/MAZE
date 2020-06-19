@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using GenericDataStructures;
 using MAZE.Api.Contracts;
 using MAZE.Events;
-using GameId = System.Int32;
+using GameId = System.String;
 using ObstacleId = System.Int32;
 
 namespace MAZE.Api
@@ -23,9 +23,9 @@ namespace MAZE.Api
             _eventService = eventService;
         }
 
-        public Result<IEnumerable<Obstacle>, ReadGameError> GetObstacles(GameId gameId)
+        public async Task<Result<IEnumerable<Obstacle>, ReadGameError>> GetObstaclesAsync(GameId gameId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAsync(gameId);
             return result.Map(
                 game =>
                 {
@@ -40,16 +40,17 @@ namespace MAZE.Api
 
         public async Task<VoidResult<RemoveObstacleError>> RemoveObstacleAsync(GameId gameId, ObstacleId obstacleId)
         {
-            var result = _gameRepository.GetGame(gameId);
+            var result = await _gameRepository.GetGameAndVersionAsync(gameId);
             return await result.Map(
-                async game =>
+                async gameAndVersion =>
                 {
+                    var (game, version) = gameAndVersion;
                     if (!game.World.Obstacles.Exists(obstacle => obstacle.Id == obstacleId))
                     {
                         return RemoveObstacleError.ObstacleNotFound;
                     }
 
-                    _eventRepository.AddEvent(gameId, new ObstacleRemoved(obstacleId));
+                    await _eventRepository.AddEventAsync(gameId, new ObstacleRemoved(obstacleId), version);
 
                     await _eventService.NotifyWorldUpdatedAsync(gameId, "locations", "paths", "obstacles", "characters");
 
