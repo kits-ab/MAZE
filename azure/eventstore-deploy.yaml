@@ -1,0 +1,43 @@
+apiVersion: '2018-10-01'
+location: northeurope
+name: maze-events
+properties:
+  containers:
+  - name: maze-events
+    properties:
+      environmentVariables:
+      - name: EVENTSTORE_DEV
+        value: True
+      - name: EVENTSTORE_ENABLE_EXTERNAL_TCP
+        value: True
+      - name: EVENTSTORE_MEM_DB
+        value: False
+      image: eventstore/eventstore
+      ports:
+      - port: 80
+      - port: 1113
+      - port: 2113
+      resources:
+        requests:
+          cpu: 1.0
+          memoryInGB: 1.5
+      volumeMounts:
+      - mountPath: /var/lib/eventstore
+        name: filesharevolume
+  osType: Linux
+  restartPolicy: Always
+  ipAddress:
+    type: Public
+    ports:
+      - port: 80
+      - port: 1113
+      - port: 2113
+    dnsNameLabel: maze-events
+  volumes:
+  - name: filesharevolume
+    azureFile:
+      sharename: maze
+      storageAccountName: mazestorage
+      storageAccountKey: <STORAGE ACCOUNT KEY>
+tags: {}
+type: Microsoft.ContainerInstance/containerGroups

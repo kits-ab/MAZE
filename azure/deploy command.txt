@@ -1,0 +1,1 @@
+az container create --resource-group MAZE --file eventstore-deploy.yaml

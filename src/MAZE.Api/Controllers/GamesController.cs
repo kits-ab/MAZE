@@ -28,10 +28,7 @@ namespace MAZE.Api.Controllers
             var result = await _gameService.NewGameAsync(game.World);
 
             return result.Map<IActionResult>(
-                newGame =>
-                {
-                    return CreatedAtAction("Get", new { gameId = newGame.Id }, newGame);
-                },
+                newGame => CreatedAtAction("Get", new { gameId = newGame.Id }, newGame),
                 newGameError =>
                 {
                     return newGameError switch

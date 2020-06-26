@@ -25,7 +25,7 @@ export class GameCreatorComponent implements OnInit {
         this.router.navigate(['/gameWithControl', createdGame.id, 'FallenMaster']);
       }
       else {
-        this.router.navigate(['/game', { id: createdGame.id }]);
+        this.router.navigate(['/game', createdGame.id ]);
       }
     });
   }

@@ -84,15 +84,9 @@ namespace MAZE.Api.Controllers
 
                 var moveResult = await _characterService.MoveCharacterAsync(gameId, characterId, locationId);
 
-                return await moveResult.Map<Task<IActionResult>>(
-                    async () =>
-                    {
-                        var result = await _characterService.GetCharacterAsync(gameId, characterId);
-                        return result.Map<IActionResult>(
-                            Ok,
-                            _ => Conflict("Character was unavailable after movement"));
-                    },
-                    moveCharacterError => Task.FromResult(CreateErrorResponse(moveCharacterError)));
+                return moveResult.Map(
+                    Ok,
+                    CreateErrorResponse);
             }
             else
             {

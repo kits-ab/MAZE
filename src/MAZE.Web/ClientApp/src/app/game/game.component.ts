@@ -13,6 +13,7 @@ import { GamesService, Character } from '@kokitotsos/maze-client-angular';
 export class GameComponent implements OnInit {
   private static readonly characterSize = 20;
   private readonly gameService = new GameService(this.activatedRoute.snapshot.params.id, this.gamesApi);
+  readonly joinGameQrUrl = `/Games/${this.activatedRoute.snapshot.params.id}/Join/QR`;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,

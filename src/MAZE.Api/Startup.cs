@@ -75,16 +75,9 @@ namespace MAZE.Api
 
             app.UseCors(options =>
             {
-                if (env.IsDevelopment())
-                {
-                    options.WithOrigins("https://localhost:44320");
-                }
-                else
-                {
-                    options.WithOrigins("https://maze-client.azurewebsites.net");
-                }
-
-                options.AllowAnyHeader()
+                options
+                    .WithOrigins(env.IsDevelopment() ? "https://localhost:44320" : "https://maze-client.azurewebsites.net")
+                    .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
             });

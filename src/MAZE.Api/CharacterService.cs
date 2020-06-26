@@ -57,7 +57,7 @@ namespace MAZE.Api
                 readGameError => ConvertToReadCharacterError(readGameError));
         }
 
-        public async Task<VoidResult<MoveCharacterError>> MoveCharacterAsync(GameId gameId, CharacterId characterId, LocationId newLocationId)
+        public async Task<Result<Character, MoveCharacterError>> MoveCharacterAsync(GameId gameId, CharacterId characterId, LocationId newLocationId)
         {
             var result = await _gameRepository.GetGameAndVersionAsync(gameId);
             return await result.Map(
@@ -83,13 +83,17 @@ namespace MAZE.Api
                         return MoveCharacterError.NotAnAvailableMovement;
                     }
 
-                    await _eventRepository.AddEventAsync(gameId, new CharacterMoved(characterId, newLocationId), version);
+                    var characterMoved = new CharacterMoved(characterId, newLocationId);
+
+                    await _eventRepository.AddEventAsync(gameId, characterMoved, version);
 
                     await _gameEventService.NotifyWorldUpdatedAsync(gameId, "characters");
 
-                    return VoidResult<MoveCharacterError>.Success;
+                    characterMoved.ApplyToGame(game);
+
+                    return CreateCharacter(character, game.World);
                 },
-                readGameError => Task.FromResult(new VoidResult<MoveCharacterError>(ConvertToMoveCharacterError(readGameError))));
+                readGameError => Task.FromResult(new Result<Character, MoveCharacterError>(ConvertToMoveCharacterError(readGameError))));
         }
 
         private static CharacterClass Convert(Models.CharacterClass characterClass)
