@@ -50,9 +50,15 @@ namespace MAZE.Api
                         return RemoveObstacleError.ObstacleNotFound;
                     }
 
-                    await _eventRepository.AddEventAsync(gameId, new ObstacleRemoved(obstacleId), version);
+                    var obstacleRemoved = new ObstacleRemoved(obstacleId);
 
-                    await _eventService.NotifyWorldUpdatedAsync(gameId, "locations", "paths", "obstacles", "characters");
+                    await _eventRepository.AddEventAsync(gameId, obstacleRemoved, version);
+
+                    var changedResources = obstacleRemoved.ApplyToGame(game);
+
+                    var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
+
+                    await _eventService.NotifyWorldUpdatedAsync(gameId, changedResourceNames.ToArray());
 
                     return VoidResult<RemoveObstacleError>.Success;
                 },

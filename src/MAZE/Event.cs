@@ -1,9 +1,11 @@
-﻿using MAZE.Models;
+﻿using System.Collections.Generic;
+using GenericDataStructures;
+using MAZE.Models;
 
 namespace MAZE
 {
     public abstract class Event
     {
-        public abstract void ApplyToGame(Game game);
+        public abstract IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game);
     }
 }

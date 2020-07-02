@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { GamesService, CharacterClass, PatchOperation, Movement } from '@kokitotsos/maze-client-angular';
+import { GamesService, CharacterClass, PatchOperation } from '@kokitotsos/maze-client-angular';
 import { LocationId, CharacterId, GameId } from '../game.service';
 import { ActivatedRoute } from '@angular/router';
 import { GameEventService } from '../game-event.service';
@@ -13,7 +13,18 @@ export class GameControlComponent implements OnInit {
   private static readonly maxNumberOfSteps = 4;
   private readonly gameId: GameId = this.activatedRoute.snapshot.params.id;
   private readonly gameEventService = new GameEventService(this.gameId, this.activatedRoute.snapshot.params.playerName);
-  actionControls = new Map<Action, IActionControl>();
+
+  actionNames: ActionName[] = [
+    'move-west',
+    'move-east',
+    'move-north',
+    'move-south',
+    'use-portal',
+    'clear-obstacle'
+  ];
+
+  characters: ICharacter[] = [];
+
   awaitingNewControls = true;
 
   constructor(
@@ -21,91 +32,76 @@ export class GameControlComponent implements OnInit {
     private readonly gameApi: GamesService) { }
 
   ngOnInit() {
-    this.actionControls = new Map<Action, IActionControl>();
-    this.addActionControl('north');
-    this.addActionControl('west');
-    this.addActionControl('east');    
-    this.addActionControl('south');
-    this.addActionControl('portal');
-
     this.gameEventService.getToken().subscribe(newToken => {
       this.gameApi.defaultHeaders = this.gameApi.defaultHeaders.set('Authorization', `Bearer ${newToken}`);
     });
 
     this.gameEventService.getWorldUpdates().subscribe(worldUpdate => {
       if (worldUpdate.potentiallyChangedResources.includes('characters')) {
-        this.gameApi.getCharacters(this.gameId).subscribe(characters => {
-          // Reset movements
-          this.actionControls.forEach(actionControl => {
-            actionControl.characterControls.forEach(characterControl => {
-              for (let i = 0; i < characterControl.movements.length; i++) {
-                characterControl.movements[i] = null;
+        this.gameApi.getCharacters(this.gameId).subscribe(newCharacters => {
+          this.characters = newCharacters.map(newCharacter => {
+            const movementActions = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4 + 1);
+            const directions: Direction[] = ['west', 'east', 'north', 'south'];
+            directions.forEach((direction, directionIndex) => {
+              for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
+                const availableMovement = newCharacter.availableMovements.find(movement => movement.numberOfPathsToTravel == movementSteps && movement.type == direction);
+                movementActions[directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1] = {
+                  name: this.getActionName(direction),
+                  description: `${movementSteps} step${movementSteps > 1 ? 's' : ''} ${direction}`,
+                  isAvailable: availableMovement ? true : false,
+                  locationId: availableMovement ? availableMovement.location : null
+                };
               }
             });
-          });
 
-          characters.forEach(character => {
-            if (!this.actionControls.get('west').characterControls.has(character.id)) {
-              this.addCharacterControls(character.id, character.characterClass);
+            const availablePortal = newCharacter.availableMovements.find(movement => movement.type == 'portal');
+            movementActions[movementActions.length - 1] = {
+              name: 'use-portal',
+              description: 'Use portal',
+              isAvailable: availablePortal ? true : false,
+              locationId: availablePortal ? availablePortal.location : null
             }
-            
-            character.availableMovements
-              .filter(movement => movement.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps)
-              .forEach(movement => {
-                const actionControl = this.actionControls.get(movement.type);
-                const characterControl = actionControl.characterControls.get(character.id);
-                characterControl.movements[movement.numberOfPathsToTravel - 1] = movement.location;
-              });
 
-            this.awaitingNewControls = false;
+            const character: ICharacter = {
+              id: newCharacter.id,
+              characterClass: newCharacter.characterClass,
+              actions: movementActions
+            };
+            return character;
           });
+
+          this.awaitingNewControls = false;
         });
       }
     });
   }
 
-  private addActionControl(action: Action): void {
-    const newActionControl: IActionControl = {
-      action: action,
-      characterControls: new Map<CharacterId, ICharacterControl>()
-    };
-    this.actionControls.set(newActionControl.action, newActionControl);
-  }
-
-  private addCharacterControls(characterId: CharacterId, characterClass: CharacterClass): void {
-    this.addCharacterControl(characterId, characterClass, 'west');
-    this.addCharacterControl(characterId, characterClass, 'east');
-    this.addCharacterControl(characterId, characterClass, 'north');
-    this.addCharacterControl(characterId, characterClass, 'south');
-    this.addCharacterControl(characterId, characterClass, 'portal');
-  }
-
-  private addCharacterControl(characterId: CharacterId, characterClass: CharacterClass, action: Action): void {
-    const newCharacterControl: ICharacterControl = {
-      characterId: characterId,
-      characterClass: characterClass,
-      movements: new Array<LocationId>(action == 'portal' ? 1 : GameControlComponent.maxNumberOfSteps)
-    };
-    this.actionControls.get(action).characterControls.set(newCharacterControl.characterId, newCharacterControl);
+  private getActionName(direction: Direction): DirectionMovementActionName {
+    switch (direction) {
+      case 'west':
+        return 'move-west';
+      case 'east':
+        return 'move-east';
+      case 'north':
+        return 'move-north';
+      case 'south':
+        return 'move-south';
+    }
   }
 
   actionsCanBeUsed(): boolean {
     return this.gameApi.defaultHeaders.has('Authorization') && !this.awaitingNewControls;
   }
 
-  getActionControls(): IActionControl[] {
-    return [...this.actionControls.values()];
+  getActions(character: ICharacter, actionName: ActionName): IMovementAction[] {
+    return character.actions.filter(action => action.name == actionName);
   }
 
-  getCharacterControls(actionControl: IActionControl): ICharacterControl[] {
-    return [...actionControl.characterControls.values()];
+  executeAction(characterId: CharacterId, action: IMovementAction): void {
+    this.move(characterId, action.locationId);
   }
 
-  getLocationIds(characterControl: ICharacterControl): LocationId[] {
-    return characterControl.movements;
-  }
-
-  move(characterId: CharacterId, newLocationId: LocationId): void {
+  private move(characterId: CharacterId, newLocationId: LocationId): void {
     const patchOperation: PatchOperation = {
       op: 'replace',
       path: 'location',
@@ -123,15 +119,23 @@ export class GameControlComponent implements OnInit {
   }
 }
 
-interface IActionControl {
-  action: Action;
-  characterControls: Map<CharacterId, ICharacterControl>;
-}
-
-interface ICharacterControl {
-  characterId: CharacterId;
+interface ICharacter {
+  id: CharacterId;
   characterClass: CharacterClass;
-  movements: LocationId[];
+  actions: IMovementAction[];
 }
 
-type Action = 'west' | 'east' | 'north' | 'south' | 'portal';
+interface IMovementAction {
+  name: MovementActionName;
+  description: string;
+  isAvailable: boolean;
+  locationId: LocationId;
+}
+
+type DirectionMovementActionName = 'move-west' | 'move-east' | 'move-north' | 'move-south';
+
+type MovementActionName = DirectionMovementActionName | 'use-portal';
+
+type ActionName = MovementActionName | 'use-portal' | 'clear-obstacle';
+
+type Direction = 'west' | 'east' | 'north' | 'south';

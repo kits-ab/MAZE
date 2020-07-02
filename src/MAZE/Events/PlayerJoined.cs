@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using GenericDataStructures;
 using MAZE.Models;
 
 namespace MAZE.Events
@@ -12,7 +14,7 @@ namespace MAZE.Events
 
         public string NewPlayerName { get; }
 
-        public override void ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
         {
             var takenPlayerIds = game.Players.Select(player => player.Id).ToHashSet();
             var newPlayerId = 0;
@@ -21,7 +23,9 @@ namespace MAZE.Events
                 newPlayerId++;
             }
 
-            game.Players.Add(new Player(newPlayerId, NewPlayerName));
+            var newPlayer = new Player(newPlayerId, NewPlayerName);
+            game.Players.Add(newPlayer);
+            yield return newPlayer;
         }
     }
 }

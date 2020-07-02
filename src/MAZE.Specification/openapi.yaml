@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 4.2.1
+  version: 5.0.0
   title: MAZE
   description: MAZE API
 
@@ -126,110 +126,6 @@ paths:
                 LocationNotFound:
                   $ref: '#/components/examples/LocationNotFound'
 
-  /games/{gameId}/characters/{characterId}/teleport:
-    post:
-      operationId: teleport
-      tags:
-        - games
-      security:
-        - bearerAuthentication: []
-      parameters:
-        - $ref: '#/components/parameters/GameId'
-        - $ref: '#/components/parameters/CharacterId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Teleport'
-      responses:
-        '204':
-          description: Teleport successful
-        '401':
-          $ref: '#/components/responses/AuthorizationNeeded'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/GameNotFound'
-
-  /games/{gameId}/characters/{characterId}/smash:
-    post:
-      operationId: smash
-      tags:
-        - games
-      security:
-        - bearerAuthentication: []
-      parameters:
-        - $ref: '#/components/parameters/GameId'
-        - $ref: '#/components/parameters/CharacterId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Smash'
-      responses:
-        '204':
-          description: Smash successful
-        '401':
-          $ref: '#/components/responses/AuthorizationNeeded'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/GameNotFound'
-
-  /games/{gameId}/characters/{characterId}/disarm:
-    post:
-      operationId: disarm
-      tags:
-        - games
-      security:
-        - bearerAuthentication: []
-      parameters:
-        - $ref: '#/components/parameters/GameId'
-        - $ref: '#/components/parameters/CharacterId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Disarm'
-      responses:
-        '204':
-          description: Disarm successful
-        '401':
-          $ref: '#/components/responses/AuthorizationNeeded'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/GameNotFound'
-
-  /games/{gameId}/characters/{characterId}/heal:
-    post:
-      operationId: heal
-      tags:
-        - games
-      security:
-        - bearerAuthentication: []
-      parameters:
-        - $ref: '#/components/parameters/GameId'
-        - $ref: '#/components/parameters/CharacterId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Heal'
-      responses:
-        '204':
-          description: Heal successful
-        '401':
-          $ref: '#/components/responses/AuthorizationNeeded'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/GameNotFound'
-
   /games/{gameId}/traps:
     get:
       operationId: getTraps
@@ -286,33 +182,6 @@ paths:
                   $ref: '#/components/schemas/Obstacle'
         '404':
           $ref: '#/components/responses/GameNotFound'
-
-  /games/{gameId}/obstacles/{obstacleId}:
-    delete:
-      operationId: removeObstacle
-      tags:
-        - games
-      security:
-        - bearerAuthentication: []
-      parameters:
-        - $ref: '#/components/parameters/GameId'
-        - $ref: '#/components/parameters/ObstacleId'
-      responses:
-        '204':
-          description: Obstacle removed
-        '401':
-          $ref: '#/components/responses/AuthorizationNeeded'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              examples:
-                GameNotFound:
-                  $ref: '#/components/examples/GameNotFound'
-                ObstacleNotFound:
-                  $ref: '#/components/examples/ObstacleNotFound'
 
   /games/{gameId}/paths:
     get:
@@ -524,9 +393,11 @@ components:
         - warrior
         - cleric
 
-    Movement:
-      description: Possible movement for a character
+    Move:
+      description: Moves a character to a new location
       properties:
+        actionName:
+          type: string
         location:
           $ref: '#/components/schemas/LocationId'
         type:
@@ -535,9 +406,74 @@ components:
           description: The number of paths traveled to perform the movement
           type: integer
       required:
+        - actionName
         - location
         - type
         - numberOfPathsToTravel
+
+    ClearObstacle:
+      description: Removes an obstacle
+      properties:
+        actionName:
+          type: string
+        obstacle:
+          $ref: '#/components/schemas/ObstacleId'
+      required:
+        - actionName
+        - obstacle
+
+    Teleport:
+      description: Teleports a character to another character
+      properties:
+        actionName:
+          type: string
+        target:
+          $ref: '#/components/schemas/CharacterId'
+        to:
+          $ref: '#/components/schemas/CharacterId'
+      required:
+        - actionName
+        - target
+        - to
+
+    Smash:
+      description: Destroy walls, creating new paths in target direction
+      properties:
+        actionName:
+          type: string
+        direction: 
+          type: string
+          enum:
+            - west
+            - east
+            - north
+            - south
+      required:
+        - actionName
+        - direction
+
+    Disarm:
+      description: Disarm and remove a trap
+      properties:
+        actionName:
+            type: string
+        trap:
+          $ref: '#/components/schemas/TrapId'
+      required:
+        - actionName
+        - trap
+
+    Heal:
+      properties:
+        actionName:
+          type: string
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterId'
+      required:
+        - actionName
+        - targets
 
     Character:
       properties:
@@ -551,11 +487,31 @@ components:
              - $ref: '#/components/schemas/CharacterClass'
         location:
           $ref: '#/components/schemas/LocationId'
-        availableMovements:
+        availableActions:
           type: array
           readOnly: true
           items:
-            $ref: '#/components/schemas/Movement'
+            oneOf:
+              - $ref: '#/components/schemas/Move'
+              - $ref: '#/components/schemas/ClearObstacle'
+              - $ref: '#/components/schemas/Teleport'
+              - $ref: '#/components/schemas/Smash'
+              - $ref: '#/components/schemas/Disarm'
+              - $ref: '#/components/schemas/Heal'
+            discriminator:
+              propertyName: actionName
+        executedActions:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Move'
+              - $ref: '#/components/schemas/ClearObstacle'
+              - $ref: '#/components/schemas/Teleport'
+              - $ref: '#/components/schemas/Smash'
+              - $ref: '#/components/schemas/Disarm'
+              - $ref: '#/components/schemas/Heal'
+            discriminator:
+              propertyName: actionName
         health:
           description: Number of seconds left before dying
           type: number
@@ -574,43 +530,10 @@ components:
       required:
         - characterClass
         - location
-        - availableMovements
+        - availableActions
         - health
         - hasWeapon
         - abilityCooldown
-
-    Teleport:
-      properties:
-        target:
-          $ref: '#/components/schemas/CharacterId'
-        to:
-          $ref: '#/components/schemas/CharacterId'
-      required:
-        - target
-        - to
-
-    Smash:
-      properties:
-        targetLocation: 
-          $ref: '#/components/schemas/LocationId'
-      required:
-        - targetLocation
-
-    Disarm:
-      properties:
-        trap:
-          $ref: '#/components/schemas/TrapId'
-      required:
-        - trap
-
-    Heal:
-      properties:
-        targets:
-          type: array
-          items:
-            $ref: '#/components/schemas/CharacterId'
-      required:
-        - targets
 
   parameters:
     GameId:

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GenericDataStructures;
 using MAZE.Models;
 using WorldId = System.String;
 
@@ -24,7 +25,7 @@ namespace MAZE.Events
 
         public List<Obstacle> Obstacles { get; }
 
-        public override void ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
         {
             if (game.World.Id != null)
             {
@@ -32,9 +33,24 @@ namespace MAZE.Events
             }
 
             game.World.Id = Id;
+
             game.World.Locations.AddRange(Locations);
+            foreach (var location in Locations)
+            {
+                yield return location;
+            }
+
             game.World.Paths.AddRange(Paths);
+            foreach (var path in Paths)
+            {
+                yield return path;
+            }
+
             game.World.Obstacles.AddRange(Obstacles);
+            foreach (var obstacle in Obstacles)
+            {
+                yield return obstacle;
+            }
         }
     }
 }

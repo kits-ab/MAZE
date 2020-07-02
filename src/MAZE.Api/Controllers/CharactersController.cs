@@ -100,7 +100,6 @@ namespace MAZE.Api.Controllers
             {
                 MoveCharacterError.GameNotFound => NotFound("Game not found"),
                 MoveCharacterError.CharacterNotFound => NotFound("Character not found"),
-                MoveCharacterError.LocationNotFound => NotFound("Location not found"),
                 MoveCharacterError.NotAnAvailableMovement => BadRequest("Not an available movement"),
                 _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
             };

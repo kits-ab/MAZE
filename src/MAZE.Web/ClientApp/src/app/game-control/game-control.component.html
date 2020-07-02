@@ -1,8 +1,8 @@
-<div class="action-controls">
-  <div class="action-control" [ngClass]="actionControl.action" *ngFor="let actionControl of getActionControls()">
-    <div class="character-control" *ngFor="let characterControl of getCharacterControls(actionControl)">
-      <span class="action-name" [ngClass]="characterControl.characterClass">{{characterControl.characterClass}} {{actionControl.action}}:</span>
-      <button type="button" *ngFor="let locationId of getLocationIds(characterControl); index as i;" [disabled]="locationId == null || !actionsCanBeUsed()" (click)="move(characterControl.characterId, locationId)">{{ i + 1}} step{{i > 0 ? 's' : ''}}</button>
+<div class="actions">
+  <div class="action" [ngClass]="actionName" *ngFor="let actionName of actionNames">
+    <div class="character" *ngFor="let character of characters">
+      <span class="action-name" [ngClass]="character.characterClass">{{character.characterClass}} {{actionName}}:</span>
+      <button type="button" *ngFor="let action of getActions(character, actionName)" [disabled]="!action.isAvailable || !actionsCanBeUsed()" (click)="executeAction(character.id, action)">{{ action.description }}</button>
     </div>
   </div>
 </div>

@@ -34,24 +34,5 @@ namespace MAZE.Api.Controllers
                     };
                 });
         }
-
-        [HttpDelete("{obstacleId}")]
-        [Authorize]
-        public async Task<IActionResult> Delete(GameId gameId, ObstacleId obstacleId)
-        {
-            var result = await _obstacleService.RemoveObstacleAsync(gameId, obstacleId);
-
-            return result.Map<IActionResult>(
-                NoContent,
-                error =>
-                {
-                    return error switch
-                    {
-                        RemoveObstacleError.GameNotFound => NotFound("Game not found"),
-                        RemoveObstacleError.ObstacleNotFound => NotFound("Obstacle not found"),
-                        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
-                    };
-                });
-        }
     }
 }

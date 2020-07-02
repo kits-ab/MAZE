@@ -65,7 +65,7 @@ namespace MAZE.Api.Hubs
                 Context.Abort();
             }
 
-            await Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths", "characters"));
+            await Clients.Caller.SendAsync(nameof(WorldUpdated), new WorldUpdated("locations", "paths", "characters", "obstacles", "players"));
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

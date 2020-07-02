@@ -71,11 +71,6 @@ namespace MAZE.Api
                         return MoveCharacterError.CharacterNotFound;
                     }
 
-                    if (!game.World.Locations.Exists(location => location.Id == newLocationId && location.IsDiscovered))
-                    {
-                        return MoveCharacterError.LocationNotFound;
-                    }
-
                     var availableMovements =
                         _availableMovementsFactory.GetAvailableMovements(character.LocationId, game.World);
                     if (availableMovements.All(movement => movement.Location != newLocationId))
@@ -87,9 +82,11 @@ namespace MAZE.Api
 
                     await _eventRepository.AddEventAsync(gameId, characterMoved, version);
 
-                    await _gameEventService.NotifyWorldUpdatedAsync(gameId, "characters");
+                    var changedResources = characterMoved.ApplyToGame(game);
 
-                    characterMoved.ApplyToGame(game);
+                    var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
+
+                    await _gameEventService.NotifyWorldUpdatedAsync(gameId, changedResourceNames.ToArray());
 
                     return CreateCharacter(character, game.World);
                 },

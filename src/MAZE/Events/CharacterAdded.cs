@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using GenericDataStructures;
 using MAZE.Models;
 
 namespace MAZE.Events
@@ -12,12 +14,19 @@ namespace MAZE.Events
 
         public Character Character { get; }
 
-        public override void ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
         {
             game.World.Characters.Add(Character);
+            yield return Character;
             if (!game.World.Locations.Single(location => location.Id == Character.LocationId).IsDiscovered)
             {
-                Explorer.Discover(Character.LocationId, game.World);
+                foreach (var discoveredResource in Explorer.Discover(Character.LocationId, game.World))
+                {
+                    yield return discoveredResource.Map<Union<Player, Character, Location, Obstacle, Path>>(
+                        location => location,
+                        obstacle => obstacle,
+                        path => path);
+                }
             }
         }
     }
