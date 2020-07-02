@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 5.0.1
+  version: 5.0.2
   title: MAZE
   description: MAZE API
 
@@ -398,6 +398,8 @@ components:
       properties:
         actionName:
           type: string
+          enum:
+            - move
         location:
           $ref: '#/components/schemas/LocationId'
         type:
@@ -416,6 +418,8 @@ components:
       properties:
         actionName:
           type: string
+          enum:
+            - clearObstacle
         obstacle:
           $ref: '#/components/schemas/ObstacleId'
       required:
@@ -427,6 +431,8 @@ components:
       properties:
         actionName:
           type: string
+          enum:
+            - teleport
         target:
           $ref: '#/components/schemas/CharacterId'
         to:
@@ -441,6 +447,8 @@ components:
       properties:
         actionName:
           type: string
+          enum:
+            - smash
         direction: 
           type: string
           enum:
@@ -457,6 +465,8 @@ components:
       properties:
         actionName:
             type: string
+            enum:
+              - disarm
         trap:
           $ref: '#/components/schemas/TrapId'
       required:
@@ -467,6 +477,8 @@ components:
       properties:
         actionName:
           type: string
+          enum:
+            - heal
         targets:
           type: array
           items:
