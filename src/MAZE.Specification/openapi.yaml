@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 5.0.3
+  version: 5.0.4
   title: MAZE
   description: MAZE API
 
@@ -257,7 +257,6 @@ components:
         world:
           $ref: '#/components/schemas/WorldId'
       required:
-        - id
         - world
         
     WorldId:
