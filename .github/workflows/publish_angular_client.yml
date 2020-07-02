@@ -16,7 +16,7 @@ jobs:
           node-version: 12
           registry-url: https://registry.npmjs.org/
       - run: npm install @openapitools/openapi-generator-cli
-      - run: npx openapi-generator generate -i src/MAZE.Specification/openapi.yaml -g typescript-angular -o temp --additional-properties=npmName=@kokitotsos/maze-client-angular,ngVersion=8.0.0
+      - run: npx openapi-generator generate -i src/MAZE.Specification/openapi.yaml -g typescript-angular -o temp --additional-properties=npmName=@kokitotsos/maze-client-angular,ngVersion=8.0.0,legacyDiscriminatorBehavior=false,taggedUnions=true
       - run: npm install
         working-directory: temp
       - run: npm run build
