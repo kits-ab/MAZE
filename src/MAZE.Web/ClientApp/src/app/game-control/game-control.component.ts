@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { GamesService, CharacterClass, PatchOperation } from '@kokitotsos/maze-client-angular';
-import { LocationId, CharacterId, GameId } from '../game.service';
+import { GamesService, CharacterClass, PatchOperation, Move, ClearObstacle } from '@kokitotsos/maze-client-angular';
+import { LocationId, CharacterId, GameId, ObstacleId } from '../game.service';
 import { ActivatedRoute } from '@angular/router';
 import { GameEventService } from '../game-event.service';
 
@@ -41,43 +41,55 @@ export class GameControlComponent implements OnInit {
         this.gameApi.getCharacters(this.gameId).subscribe(newCharacters => {
           this.characters = newCharacters.map(newCharacter => {
             const movementActions = new Map<string, IMovementAction>();
-            let portalAction: IMovementAction | null = null;
+
+            const portalAction: IMovementAction = {
+              name: 'use-portal',
+              description: 'Use portal',
+              isAvailable: false,
+              locationId: null
+            };
+
+            const clearObstacleAction: IClearObstacleAction = {
+              name: 'clear-obstacle',
+              description: 'Clear obstacle',
+              isAvailable: false,
+              obstacleId: null
+            }
             
             newCharacter.availableActions.forEach(action => {
               if (action.actionName == 'move' && action.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps) {
                 if (action.type == 'portal') {
-                  portalAction = this.createPortalAction(action.location);
+                  portalAction.isAvailable = true;
+                  portalAction.locationId = action.location;
                 }
                 else {
                   movementActions.set(action.numberOfPathsToTravel + action.type, this.createMovementAction(action.type, action.numberOfPathsToTravel, action.location));
                 }
               }
+              else if (action.actionName == 'clearObstacle') {
+                clearObstacleAction.isAvailable = true;
+                clearObstacleAction.obstacleId = action.obstacle;
+              }
             });
 
-            const finalMovementAction = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4 + 1);
+            const finalMovementActions = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4);
             const directions: Direction[] = ['west', 'east', 'north', 'south'];
             directions.forEach((direction, directionIndex) => {
               for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
                 const existingMovementAction = movementActions.get(movementSteps + direction);
                 const movementActionIndex = directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1;
                 if (existingMovementAction != null) {
-                  finalMovementAction[movementActionIndex] = existingMovementAction;
+                  finalMovementActions[movementActionIndex] = existingMovementAction;
                 }
                 else {
-                  finalMovementAction[movementActionIndex] = this.createMovementAction(direction, movementSteps);
+                  finalMovementActions[movementActionIndex] = this.createMovementAction(direction, movementSteps);
                 }
               }
             });
 
-            const portalActionIndex = finalMovementAction.length - 1;
-            if (portalAction != null) {
-              finalMovementAction[portalActionIndex] = portalAction;
-            }
-            else {
-              finalMovementAction[portalActionIndex] = this.createPortalAction();
-            }
-
-            const actions = finalMovementAction;
+            const actions: Action[] = finalMovementActions;
+            actions.push(portalAction);
+            actions.push(clearObstacleAction);
 
             const character: ICharacter = {
               id: newCharacter.id,
@@ -128,24 +140,43 @@ export class GameControlComponent implements OnInit {
     return this.gameApi.defaultHeaders.has('Authorization') && !this.awaitingNewControls;
   }
 
-  getActions(character: ICharacter, actionName: ActionName): IMovementAction[] {
+  getActions(character: ICharacter, actionName: ActionName): Action[] {
     return character.actions.filter(action => action.name == actionName);
   }
 
-  executeAction(characterId: CharacterId, action: IMovementAction): void {
-    if (action.locationId == null) {
-      throw new Error('Cannot execute a movement without a location');
+  executeAction(characterId: CharacterId, action: Action): void {
+
+    let actionToExecute: ClearObstacle | Move | undefined;
+
+    if (action.name == "clear-obstacle") {
+      if (action.obstacleId == null) {
+        throw new Error('Cannot execute a obstacle removal without an obstacle');
+      }
+      const clearObstacle: ClearObstacle = {
+        actionName: 'clearObstacle',
+        obstacle: action.obstacleId
+      };
+      actionToExecute = clearObstacle;
     }
     else {
-      this.move(characterId, action.locationId);
+      if (action.locationId == null) {
+        throw new Error('Cannot execute a movement without a location');
+      }
+      const move: Move = {
+        actionName: 'move',
+        location: action.locationId
+      };
+      actionToExecute = move;
     }
-  }
 
-  private move(characterId: CharacterId, newLocationId: LocationId): void {
+    if (actionToExecute == null) {
+      throw new Error(`${action.name} is an unsupported action `);
+    }
+
     const patchOperation: PatchOperation = {
-      op: 'replace',
-      path: 'location',
-      value: newLocationId
+      op: 'add',
+      path: 'executedActions',
+      value: actionToExecute
     };
     this.awaitingNewControls = true;
     this.gameApi.updateCharacter(this.gameId, characterId, [patchOperation])
@@ -162,20 +193,30 @@ export class GameControlComponent implements OnInit {
 interface ICharacter {
   id: CharacterId;
   characterClass: CharacterClass;
-  actions: IMovementAction[];
+  actions: Array<IMovementAction | IClearObstacleAction>;
 }
 
-interface IMovementAction {
-  name: MovementActionName;
+interface IAction {
   description: string;
   isAvailable: boolean;
+}
+
+interface IMovementAction extends IAction {
+  name: MovementActionName;
   locationId: LocationId | null;
+}
+
+interface IClearObstacleAction extends IAction {
+  name: 'clear-obstacle';
+  obstacleId: ObstacleId | null;
 }
 
 type DirectionMovementActionName = 'move-west' | 'move-east' | 'move-north' | 'move-south';
 
 type MovementActionName = DirectionMovementActionName | 'use-portal';
 
-type ActionName = MovementActionName | 'use-portal' | 'clear-obstacle';
+type ActionName = MovementActionName | 'clear-obstacle';
 
 type Direction = 'west' | 'east' | 'north' | 'south';
+
+type Action = IMovementAction | IClearObstacleAction;

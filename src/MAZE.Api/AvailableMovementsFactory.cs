@@ -7,14 +7,14 @@ namespace MAZE.Api
 {
     public class AvailableMovementsFactory
     {
-        public IEnumerable<Movement> GetAvailableMovements(LocationId atLocationId, Models.World world)
+        public IEnumerable<PossibleMovement> GetAvailableMovements(LocationId atLocationId, Models.World world)
         {
             foreach (var paths in AvailablePathsFactory.GetAvailablePaths(atLocationId, world))
             {
                 var pathDistance = 1;
                 foreach (var path in paths)
                 {
-                    yield return new Movement(path.To, pathDistance, Convert(path.Type));
+                    yield return new PossibleMovement(path.To, pathDistance, Convert(path.Type));
                     pathDistance++;
                 }
             }

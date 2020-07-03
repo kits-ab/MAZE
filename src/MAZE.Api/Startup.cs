@@ -63,6 +63,7 @@ namespace MAZE.Api
             services.AddTransient<GameEventService>();
             services.AddTransient<CharacterService>();
             services.AddTransient<AvailableMovementsFactory>();
+            services.AddTransient<AvailableObstaclesToClearFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

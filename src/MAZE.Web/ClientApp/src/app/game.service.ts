@@ -45,6 +45,8 @@ export class GameService {
       const characters$ = charactersChanged ? this.gamesApi.getCharacters(this.gameId) : of(latestCharacters);
 
       return combineLatest(world$, characters$).pipe(map(([world, characters]) => {
+        latestCharacters = characters;
+
         if (world == null || characters == null) {
           throw new Error('World and characters should be loaded');
         }
@@ -368,6 +370,8 @@ export class GameService {
 export type GameId = string;
 
 export type LocationId = number;
+
+export type ObstacleId = number;
 
 export type CharacterId = number;
 

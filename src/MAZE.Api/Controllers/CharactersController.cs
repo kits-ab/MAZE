@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using GenericDataStructures;
 using MAZE.Api.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Operations;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using CharacterId = System.Int32;
 using GameId = System.String;
-using LocationId = System.Int32;
 
 namespace MAZE.Api.Controllers
 {
@@ -17,10 +18,12 @@ namespace MAZE.Api.Controllers
     public class CharactersController : ControllerBase
     {
         private readonly CharacterService _characterService;
+        private readonly ObstacleService _obstacleService;
 
-        public CharactersController(CharacterService characterService)
+        public CharactersController(CharacterService characterService, ObstacleService obstacleService)
         {
             _characterService = characterService;
+            _obstacleService = obstacleService;
         }
 
         [HttpGet]
@@ -69,24 +72,54 @@ namespace MAZE.Api.Controllers
 
             var operation = patch.Operations.Single();
 
-            if (operation.OperationType == OperationType.Replace &&
-                operation.path.Equals(nameof(Character.Location), StringComparison.InvariantCultureIgnoreCase))
+            if (operation.OperationType == OperationType.Add &&
+                operation.path.Equals("ExecutedActions", StringComparison.InvariantCultureIgnoreCase))
             {
-                LocationId locationId;
-                try
+                if (!(operation.value is JObject actionJObject))
                 {
-                    locationId = Convert.ToInt32(operation.value);
-                }
-                catch
-                {
-                    return BadRequest("Invalid move to location");
+                    return BadRequest("Invalid operation value");
                 }
 
-                var moveResult = await _characterService.MoveCharacterAsync(gameId, characterId, locationId);
+                if (actionJObject.TryGetValue("actionName", out var actionNameToken))
+                {
+                    var actionName = actionNameToken.Value<string>();
+                    Union<Move, ClearObstacle> action;
+                    switch (actionName)
+                    {
+                        case Move.Name:
+                            var move = actionJObject.ToObject<Move>();
+                            if (move == null)
+                            {
+                                return BadRequest("Invalid move data");
+                            }
 
-                return moveResult.Map(
-                    Ok,
-                    CreateErrorResponse);
+                            action = move;
+                            break;
+
+                        case ClearObstacle.Name:
+                            var clearObstacle = actionJObject.ToObject<ClearObstacle>();
+                            if (clearObstacle == null)
+                            {
+                                return BadRequest("Invalid clear obstacle data");
+                            }
+
+                            action = clearObstacle;
+                            break;
+
+                        default:
+                            return BadRequest($"{actionName} is not an supported action");
+                    }
+
+                    var actionResult = await _characterService.ExecuteActionAsync(gameId, characterId, action);
+
+                    return actionResult.Map(
+                        Ok,
+                        CreateErrorResponse);
+                }
+                else
+                {
+                    return BadRequest("No action name provided");
+                }
             }
             else
             {
@@ -94,13 +127,13 @@ namespace MAZE.Api.Controllers
             }
         }
 
-        private IActionResult CreateErrorResponse(MoveCharacterError error)
+        private IActionResult CreateErrorResponse(ExecuteActionError error)
         {
             return error switch
             {
-                MoveCharacterError.GameNotFound => NotFound("Game not found"),
-                MoveCharacterError.CharacterNotFound => NotFound("Character not found"),
-                MoveCharacterError.NotAnAvailableMovement => BadRequest("Not an available movement"),
+                ExecuteActionError.GameNotFound => NotFound("Game not found"),
+                ExecuteActionError.CharacterNotFound => NotFound("Character not found"),
+                ExecuteActionError.NotAnAvailableAction => BadRequest("Not an available action"),
                 _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
             };
         }

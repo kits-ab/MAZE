@@ -6,9 +6,9 @@ using ObstacleId = System.Int32;
 
 namespace MAZE.Events
 {
-    public class ObstacleRemoved : Event
+    public class ObstacleCleared : Event
     {
-        public ObstacleRemoved(ObstacleId obstacleId)
+        public ObstacleCleared(ObstacleId obstacleId)
         {
             ObstacleId = obstacleId;
         }

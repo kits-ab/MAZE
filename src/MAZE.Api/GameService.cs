@@ -70,22 +70,15 @@ namespace MAZE.Api
         public async Task<Result<Player, ReadGameError>> JoinGameAsync(GameId gameId, string playerName)
         {
             var result = await _gameRepository.GetGameAndVersionAsync(gameId);
-            return await result.Map(
+            return await result.Map<Task<Result<Player, ReadGameError>>>(
                 async gameAndVersion =>
                 {
-                    var (_, version) = gameAndVersion;
+                    var (game, version) = gameAndVersion;
                     var playerJoined = new PlayerJoined(playerName);
+                    var changedResources = playerJoined.ApplyToGame(game);
                     await _eventRepository.AddEventAsync(gameId, playerJoined, version);
 
-                    var updatedResult = await _gameRepository.GetGameAsync(gameId);
-
-                    return updatedResult.Map(
-                        updatedGame =>
-                        {
-                            var newPlayer = updatedGame.Players.Single(player => player.Name == playerName);
-                            return Convert(newPlayer);
-                        },
-                        readGameError => new Result<Player, ReadGameError>(readGameError));
+                    return Convert(game.Players.Last());
                 },
                 readGameError => Task.FromResult(new Result<Player, ReadGameError>(readGameError)));
         }

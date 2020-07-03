@@ -2,18 +2,14 @@
 
 namespace MAZE.Api.Contracts
 {
-    public class Movement : IAction
+    public class PossibleMovement : Move
     {
-        public Movement(LocationId locationId, int numberOfPathsToTravel, PathType type)
+        public PossibleMovement(LocationId location, int numberOfPathsToTravel, PathType type)
+            : base(location)
         {
-            Location = locationId;
             NumberOfPathsToTravel = numberOfPathsToTravel;
             Type = type;
         }
-
-        public string ActionName => "move";
-
-        public LocationId Location { get; }
 
         public int NumberOfPathsToTravel { get; }
 

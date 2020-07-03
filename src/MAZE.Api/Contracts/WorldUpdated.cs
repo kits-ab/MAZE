@@ -5,11 +5,16 @@ namespace MAZE.Api.Contracts
 {
     public class WorldUpdated
     {
+        public WorldUpdated(IEnumerable<string> potentiallyChangedResources)
+        {
+            PotentiallyChangedResources = potentiallyChangedResources.ToList();
+        }
+
         public WorldUpdated(params string[] potentiallyChangedResources)
         {
             PotentiallyChangedResources = potentiallyChangedResources.ToList();
         }
 
-        public IEnumerable<string> PotentiallyChangedResources { get; }
+        public List<string> PotentiallyChangedResources { get; }
     }
 }

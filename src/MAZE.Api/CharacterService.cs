@@ -8,6 +8,7 @@ using MAZE.Events;
 using CharacterId = System.Int32;
 using GameId = System.String;
 using LocationId = System.Int32;
+using ObstacleId = System.Int32;
 
 namespace MAZE.Api
 {
@@ -17,13 +18,20 @@ namespace MAZE.Api
         private readonly EventRepository _eventRepository;
         private readonly GameEventService _gameEventService;
         private readonly AvailableMovementsFactory _availableMovementsFactory;
+        private readonly AvailableObstaclesToClearFactory _availableObstaclesToClearFactory;
 
-        public CharacterService(GameRepository gameRepository, EventRepository eventRepository, GameEventService gameEventService, AvailableMovementsFactory availableMovementsFactory)
+        public CharacterService(
+            GameRepository gameRepository,
+            EventRepository eventRepository,
+            GameEventService gameEventService,
+            AvailableMovementsFactory availableMovementsFactory,
+            AvailableObstaclesToClearFactory availableObstaclesToClearFactory)
         {
             _gameRepository = gameRepository;
             _eventRepository = eventRepository;
             _gameEventService = gameEventService;
             _availableMovementsFactory = availableMovementsFactory;
+            _availableObstaclesToClearFactory = availableObstaclesToClearFactory;
         }
 
         public async Task<Result<IEnumerable<Character>, ReadGameError>> GetCharactersAsync(GameId gameId)
@@ -57,40 +65,41 @@ namespace MAZE.Api
                 readGameError => ConvertToReadCharacterError(readGameError));
         }
 
-        public async Task<Result<Character, MoveCharacterError>> MoveCharacterAsync(GameId gameId, CharacterId characterId, LocationId newLocationId)
+        public async Task<Result<Character, ExecuteActionError>> ExecuteActionAsync(GameId gameId, CharacterId characterId, Union<Move, ClearObstacle> action)
         {
             var result = await _gameRepository.GetGameAndVersionAsync(gameId);
             return await result.Map(
                 async gameAndVersion =>
                 {
                     var (game, version) = gameAndVersion;
+
                     var character = game.World.Characters.SingleOrDefault(characterCandidate => characterCandidate.Id == characterId);
 
                     if (character == null)
                     {
-                        return MoveCharacterError.CharacterNotFound;
+                        return ExecuteActionError.CharacterNotFound;
                     }
 
-                    var availableMovements =
-                        _availableMovementsFactory.GetAvailableMovements(character.LocationId, game.World);
-                    if (availableMovements.All(movement => movement.Location != newLocationId))
-                    {
-                        return MoveCharacterError.NotAnAvailableMovement;
-                    }
+                    var createEventResult = action.Map(
+                        move => MoveCharacter(game, version, character, move.Location),
+                        clearObstacle => ClearObstacle(game, version, character, clearObstacle.Obstacle));
 
-                    var characterMoved = new CharacterMoved(characterId, newLocationId);
+                    return await createEventResult.Map<Task<Result<Character, ExecuteActionError>>>(
+                        async @event =>
+                        {
+                            await _eventRepository.AddEventAsync(game.Id, @event, version);
 
-                    await _eventRepository.AddEventAsync(gameId, characterMoved, version);
+                            var changedResources = @event.ApplyToGame(game);
 
-                    var changedResources = characterMoved.ApplyToGame(game);
+                            var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
 
-                    var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
+                            await _gameEventService.NotifyWorldUpdatedAsync(game.Id, changedResourceNames.ToArray());
 
-                    await _gameEventService.NotifyWorldUpdatedAsync(gameId, changedResourceNames.ToArray());
-
-                    return CreateCharacter(character, game.World);
+                            return CreateCharacter(character, game.World);
+                        },
+                        error => Task.FromResult(new Result<Character, ExecuteActionError>(error)));
                 },
-                readGameError => Task.FromResult(new Result<Character, MoveCharacterError>(ConvertToMoveCharacterError(readGameError))));
+                readGameError => Task.FromResult(new Result<Character, ExecuteActionError>(ConvertToMoveCharacterError(readGameError))));
         }
 
         private static CharacterClass Convert(Models.CharacterClass characterClass)
@@ -114,19 +123,64 @@ namespace MAZE.Api
             };
         }
 
-        private static MoveCharacterError ConvertToMoveCharacterError(ReadGameError error)
+        private static ExecuteActionError ConvertToMoveCharacterError(ReadGameError error)
         {
             return error switch
             {
-                ReadGameError.NotFound => MoveCharacterError.GameNotFound,
+                ReadGameError.NotFound => ExecuteActionError.GameNotFound,
                 _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
             };
+        }
+
+        private static Models.ObstacleType GetObstacleTypeCharacterCanClear(Models.Character character)
+        {
+            return character.Class switch
+            {
+                Models.CharacterClass.Mage => Models.ObstacleType.ForceField,
+                Models.CharacterClass.Rogue => Models.ObstacleType.Lock,
+                Models.CharacterClass.Warrior => Models.ObstacleType.Stone,
+                Models.CharacterClass.Cleric => Models.ObstacleType.Ghost,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+
+        private Result<Event, ExecuteActionError> MoveCharacter(Models.Game game, long version, Models.Character character, LocationId newLocationId)
+        {
+            var availableMovements =
+                _availableMovementsFactory.GetAvailableMovements(character.LocationId, game.World);
+            if (availableMovements.All(movement => movement.Location != newLocationId))
+            {
+                return ExecuteActionError.NotAnAvailableAction;
+            }
+
+            return new CharacterMoved(character.Id, newLocationId);
+        }
+
+        private Result<Event, ExecuteActionError> ClearObstacle(Models.Game game, long version, Models.Character character, ObstacleId obstacleId)
+        {
+            var obstacleTypeCharacterCanClear = GetObstacleTypeCharacterCanClear(character);
+            var availableObstacleRemovals = _availableObstaclesToClearFactory.GetAvailableObstaclesToClear(character.LocationId, obstacleTypeCharacterCanClear, game.World);
+
+            if (availableObstacleRemovals.All(obstacleRemoval => obstacleRemoval.Obstacle != obstacleId))
+            {
+                return ExecuteActionError.NotAnAvailableAction;
+            }
+
+            var obstacleCleared = new ObstacleCleared(obstacleId);
+
+            return obstacleCleared;
         }
 
         private Character CreateCharacter(Models.Character character, Models.World world)
         {
             var availableMovements = _availableMovementsFactory.GetAvailableMovements(character.LocationId, world);
-            return new Character(character.Id, character.LocationId, Convert(character.Class), availableMovements);
+
+            var obstacleTypeCharacterCanClear = GetObstacleTypeCharacterCanClear(character);
+            var availableObstacleRemovals = _availableObstaclesToClearFactory.GetAvailableObstaclesToClear(character.LocationId, obstacleTypeCharacterCanClear, world);
+
+            var availableActions = availableMovements.Cast<IAction>().Concat(availableObstacleRemovals);
+
+            return new Character(character.Id, character.LocationId, Convert(character.Class), availableActions);
         }
     }
 }

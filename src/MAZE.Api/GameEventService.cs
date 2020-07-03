@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using MAZE.Api.Contracts;
 using MAZE.Api.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -17,7 +18,11 @@ namespace MAZE.Api
 
         public async Task NotifyWorldUpdatedAsync(GameId gameId, params string[] changedResources)
         {
-            await _hubContext.Clients.Groups(gameId).SendAsync(nameof(WorldUpdated), new WorldUpdated(changedResources));
+            // Characters are always sent due to their available actions are not resolved after each event
+            var potentiallyChangedResources = changedResources.Contains("characters")
+                ? changedResources
+                : changedResources.Concat(new[] { "characters" });
+            await _hubContext.Clients.Groups(gameId).SendAsync(nameof(WorldUpdated), new WorldUpdated(potentiallyChangedResources));
         }
     }
 }
