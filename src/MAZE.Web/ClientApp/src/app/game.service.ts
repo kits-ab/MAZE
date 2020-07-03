@@ -13,10 +13,10 @@ export class GameService {
   }
 
   getGame(): Observable<IGame> {
-    let latestLocations: Location[] = null;
-    let latestPaths: Path[] = null;
-    let latestWorld: IWorld = null;
-    let latestCharacters: Character[] = null;
+    let latestLocations: Location[] | undefined;
+    let latestPaths: Path[] | undefined;
+    let latestWorld: IWorld | undefined;
+    let latestCharacters: Character[] | undefined;
 
     const worldUpdates$ = this.gameEventService.getWorldUpdates();
 
@@ -31,6 +31,9 @@ export class GameService {
         .pipe(map(([locations, paths]) => {
           latestLocations = locations;
           latestPaths = paths;
+          if (latestLocations == null || latestPaths == null) {
+            throw new Error('Locations and paths should be loaded');
+          }
           const locationData = this.buildLocationData(latestLocations, latestPaths);
           const locationPositions = this.buildLocationPositions(locationData);
           const tiles = this.buildTiles(locationData);
@@ -42,6 +45,10 @@ export class GameService {
       const characters$ = charactersChanged ? this.gamesApi.getCharacters(this.gameId) : of(latestCharacters);
 
       return combineLatest(world$, characters$).pipe(map(([world, characters]) => {
+        if (world == null || characters == null) {
+          throw new Error('World and characters should be loaded');
+        }
+
         const game: IGame = {
           world: world,
           characters: characters
@@ -62,15 +69,18 @@ export class GameService {
         y: undefined,
         visited: false,
         hasPathWest: false,
-        locationWest: undefined,
+        locationWest: null,
         hasPathEast: false,
-        locationEast: undefined,
+        locationEast: null,
         hasPathNorth: false,
-        locationNorth: undefined,
+        locationNorth: null,
         hasPathSouth: false,
-        locationSouth: undefined
+        locationSouth: null
       }]));
     const originLocationPosition = locationData.get(originLocationId);
+    if (originLocationPosition == null) {
+      throw new Error('An origin location is expected to exist')
+    }
     originLocationPosition.x = 0;
     originLocationPosition.y = 0;
     originLocationPosition.visited = true;
@@ -78,35 +88,37 @@ export class GameService {
     const pathConnections = new Map<LocationId, [LocationId, PathType][]>();
     paths.forEach(path => {
       if (path.type === 'west' || path.type === 'east' || path.type === 'north' || path.type === 'south') {
-        if (!pathConnections.has(path.from)) {
+        const pathConnectionsFrom = pathConnections.get(path.from);
+        if (pathConnectionsFrom == null) {
           pathConnections.set(path.from, [[path.to, path.type]]);
         } else {
-          pathConnections.get(path.from).push([path.to, path.type]);
+          pathConnectionsFrom.push([path.to, path.type]);
         }
 
         const location = locationData.get(path.from);
         if (location != null) {
           const connectedLocation = locationData.get(path.to);
+          const neighborLocation = connectedLocation === undefined ? null : connectedLocation;
 
           switch (path.type) {
             case 'west':
               location.hasPathWest = true;
-              location.locationWest = connectedLocation;
+              location.locationWest = neighborLocation;
               break;
 
             case 'east':
               location.hasPathEast = true;
-              location.locationEast = connectedLocation;
+              location.locationEast = neighborLocation;
               break;
 
             case 'north':
               location.hasPathNorth = true;
-              location.locationNorth = connectedLocation;
+              location.locationNorth = neighborLocation;
               break;
 
             case 'south':
               location.hasPathSouth = true;
-              location.locationSouth = connectedLocation;
+              location.locationSouth = neighborLocation;
               break;
           }
         }
@@ -114,6 +126,10 @@ export class GameService {
     });
 
     const originPathConnection = pathConnections.get(originLocationId);
+
+    if (originPathConnection == null) {
+      throw new Error('Origin path connection is expected to exist')
+    }
 
     originPathConnection.forEach(([originNeighborLocationId, directionFromParent]) => {
       this.traversePaths(originNeighborLocationId, originLocationId, directionFromParent, locationData, pathConnections);
@@ -128,6 +144,9 @@ export class GameService {
   }
 
   private convertToLocationEntry(location: ILocationData): [LocationId, IPosition] {
+    if (location.x == null || location.y == null) {
+      throw new Error('Cannot convert a location data without position');
+    }
     return [location.locationId, { x: location.x + GameService.tileSize / 2, y: location.y + GameService.tileSize / 2 }];
   }
 
@@ -135,6 +154,10 @@ export class GameService {
     const tiles: ITile[] = [];
 
     locationData.forEach(location => {
+      if (location.x == null || location.y == null) {
+        throw new Error('All locations should have positions at this point');
+      }
+
       tiles.push({
         x: location.x,
         y: location.y,
@@ -273,7 +296,15 @@ export class GameService {
 
   private traversePaths(locationId: LocationId, parentLocationId: LocationId, directionFromParent: PathType, locationData: Map<LocationId, ILocationData>, pathConnections: Map<LocationId, [LocationId, PathType][]>): void {
     const location = locationData.get(locationId);
+    if (location == null) {
+      throw new Error('Location is expected to exist')
+    }
+
     const parentLocation = locationData.get(parentLocationId);
+    if (parentLocation == null || parentLocation.x == null || parentLocation.y == null) {
+      throw new Error('A parent location is expected to exist with a position')
+    }
+
     location.visited = true;
     switch (directionFromParent) {
       case 'west':
@@ -334,7 +365,7 @@ export class GameService {
   }
 }
 
-export type GameId = number;
+export type GameId = string;
 
 export type LocationId = number;
 
@@ -344,20 +375,20 @@ interface ILocationData {
   locationId: LocationId;
   visited: boolean;
 
-  x: number;
-  y: number;
+  x: number | undefined;
+  y: number | undefined;
 
   hasPathWest: boolean;
-  locationWest: ILocationData;
+  locationWest: ILocationData | null;
 
   hasPathEast: boolean;
-  locationEast: ILocationData;
+  locationEast: ILocationData | null;
 
   hasPathNorth: boolean;
-  locationNorth: ILocationData;
+  locationNorth: ILocationData | null;
 
   hasPathSouth: boolean;
-  locationSouth: ILocationData;
+  locationSouth: ILocationData | null;
 }
 
 export interface IGame {

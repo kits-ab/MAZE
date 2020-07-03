@@ -2,7 +2,7 @@
 
 namespace MAZE.Api.Contracts
 {
-    public class Movement
+    public class Movement : IAction
     {
         public Movement(LocationId locationId, int numberOfPathsToTravel, PathType type)
         {
@@ -10,6 +10,8 @@ namespace MAZE.Api.Contracts
             NumberOfPathsToTravel = numberOfPathsToTravel;
             Type = type;
         }
+
+        public string ActionName => "move";
 
         public LocationId Location { get; }
 

@@ -42,18 +42,18 @@ export class GameComponent implements OnInit {
 
       const characters = svg.select<SVGGElement>('.characters')
         .selectAll<SVGImageElement, any>('image')
-        .data<any>(game.characters, character => character.id.toString());
+        .data<Character>(game.characters, character => character.id.toString());
 
       characters
-        .attr('x', character => game.world.locationPositions.get(character.location).x - GameComponent.characterSize / 2)
-        .attr('y', character => game.world.locationPositions.get(character.location).y - GameComponent.characterSize / 2)
+        .attr('x', character => game.world.locationPositions.get(character.location)!.x - GameComponent.characterSize / 2)
+        .attr('y', character => game.world.locationPositions.get(character.location)!.y - GameComponent.characterSize / 2)
 
       characters
         .enter()
         .append('image')
         .attr('class', 'character')
-        .attr('x', character => game.world.locationPositions.get(character.location).x - GameComponent.characterSize / 2)
-        .attr('y', character => game.world.locationPositions.get(character.location).y - GameComponent.characterSize / 2)
+        .attr('x', character => game.world.locationPositions.get(character.location)!.x - GameComponent.characterSize / 2)
+        .attr('y', character => game.world.locationPositions.get(character.location)!.y - GameComponent.characterSize / 2)
         .attr('width', GameComponent.characterSize)
         .attr('height', GameComponent.characterSize)
         .attr('href', character => `/assets/characters/${character.characterClass}.png`)

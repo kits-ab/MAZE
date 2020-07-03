@@ -40,32 +40,49 @@ export class GameControlComponent implements OnInit {
       if (worldUpdate.potentiallyChangedResources.includes('characters')) {
         this.gameApi.getCharacters(this.gameId).subscribe(newCharacters => {
           this.characters = newCharacters.map(newCharacter => {
-            const movementActions = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4 + 1);
-            const directions: Direction[] = ['west', 'east', 'north', 'south'];
-            directions.forEach((direction, directionIndex) => {
-              for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
-                const availableMovement = newCharacter.availableMovements.find(movement => movement.numberOfPathsToTravel == movementSteps && movement.type == direction);
-                movementActions[directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1] = {
-                  name: this.getActionName(direction),
-                  description: `${movementSteps} step${movementSteps > 1 ? 's' : ''} ${direction}`,
-                  isAvailable: availableMovement ? true : false,
-                  locationId: availableMovement ? availableMovement.location : null
-                };
+            const movementActions = new Map<string, IMovementAction>();
+            let portalAction: IMovementAction | null = null;
+            
+            newCharacter.availableActions.forEach(action => {
+              if (action.actionName == 'move' && action.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps) {
+                if (action.type == 'portal') {
+                  portalAction = this.createPortalAction(action.location);
+                }
+                else {
+                  movementActions.set(action.numberOfPathsToTravel + action.type, this.createMovementAction(action.type, action.numberOfPathsToTravel, action.location));
+                }
               }
             });
 
-            const availablePortal = newCharacter.availableMovements.find(movement => movement.type == 'portal');
-            movementActions[movementActions.length - 1] = {
-              name: 'use-portal',
-              description: 'Use portal',
-              isAvailable: availablePortal ? true : false,
-              locationId: availablePortal ? availablePortal.location : null
+            const finalMovementAction = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4 + 1);
+            const directions: Direction[] = ['west', 'east', 'north', 'south'];
+            directions.forEach((direction, directionIndex) => {
+              for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
+                const existingMovementAction = movementActions.get(movementSteps + direction);
+                const movementActionIndex = directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1;
+                if (existingMovementAction != null) {
+                  finalMovementAction[movementActionIndex] = existingMovementAction;
+                }
+                else {
+                  finalMovementAction[movementActionIndex] = this.createMovementAction(direction, movementSteps);
+                }
+              }
+            });
+
+            const portalActionIndex = finalMovementAction.length - 1;
+            if (portalAction != null) {
+              finalMovementAction[portalActionIndex] = portalAction;
             }
+            else {
+              finalMovementAction[portalActionIndex] = this.createPortalAction();
+            }
+
+            const actions = finalMovementAction;
 
             const character: ICharacter = {
               id: newCharacter.id,
               characterClass: newCharacter.characterClass,
-              actions: movementActions
+              actions: actions
             };
             return character;
           });
@@ -74,6 +91,24 @@ export class GameControlComponent implements OnInit {
         });
       }
     });
+  }
+
+  private createPortalAction(locationId?: LocationId): IMovementAction {
+    return {
+      name: 'use-portal',
+      description: 'Use portal',
+      isAvailable: locationId != null,
+      locationId: locationId === undefined ? null : locationId
+    };
+  }
+
+  private createMovementAction(direction: Direction, numberOfSteps: number, locationId?: LocationId): IMovementAction {
+    return {
+      name: this.getActionName(direction),
+      description: `${numberOfSteps} step${numberOfSteps > 1 ? 's' : ''} ${direction}`,
+      isAvailable: locationId != null,
+      locationId: locationId === undefined ? null : locationId
+    };
   }
 
   private getActionName(direction: Direction): DirectionMovementActionName {
@@ -98,7 +133,12 @@ export class GameControlComponent implements OnInit {
   }
 
   executeAction(characterId: CharacterId, action: IMovementAction): void {
-    this.move(characterId, action.locationId);
+    if (action.locationId == null) {
+      throw new Error('Cannot execute a movement without a location');
+    }
+    else {
+      this.move(characterId, action.locationId);
+    }
   }
 
   private move(characterId: CharacterId, newLocationId: LocationId): void {
@@ -129,7 +169,7 @@ interface IMovementAction {
   name: MovementActionName;
   description: string;
   isAvailable: boolean;
-  locationId: LocationId;
+  locationId: LocationId | null;
 }
 
 type DirectionMovementActionName = 'move-west' | 'move-east' | 'move-north' | 'move-south';

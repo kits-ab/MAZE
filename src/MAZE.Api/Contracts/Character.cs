@@ -7,12 +7,12 @@ namespace MAZE.Api.Contracts
 {
     public class Character
     {
-        public Character(CharacterId id, LocationId location, CharacterClass characterClass, IEnumerable<Movement> availableMovements)
+        public Character(CharacterId id, LocationId location, CharacterClass characterClass, IEnumerable<IAction> availableActions)
         {
             Id = id;
             Location = location;
             CharacterClass = characterClass;
-            AvailableMovements = availableMovements.ToList();
+            AvailableActions = availableActions.ToList();
         }
 
         public CharacterId Id { get; }
@@ -21,6 +21,6 @@ namespace MAZE.Api.Contracts
 
         public CharacterClass CharacterClass { get; }
 
-        public List<Movement> AvailableMovements { get; }
+        public List<IAction> AvailableActions { get; }
     }
 }

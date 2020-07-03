@@ -17,7 +17,6 @@ export class GameCreatorComponent implements OnInit {
 
   ngOnInit() {
     const newGame: Game = {
-      id: null,
       world: 'Castle'
     };
     this.gameApi.createGame(newGame).subscribe(createdGame => {
