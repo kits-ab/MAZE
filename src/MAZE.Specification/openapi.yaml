@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 5.0.4
+  version: 5.0.5
   title: MAZE
   description: MAZE API
 
@@ -399,8 +399,8 @@ components:
         - warrior
         - cleric
 
-    Move:
-      description: Moves a character to a new location
+    PossibleMove:
+      description: A movement a character can perform
       properties:
         actionName:
           type: string
@@ -418,6 +418,19 @@ components:
         - location
         - type
         - numberOfPathsToTravel
+
+    Move:
+      description: Moves a character to a new location
+      properties:
+        actionName:
+          type: string
+          enum:
+            - move
+        location:
+          $ref: '#/components/schemas/LocationId'
+      required:
+        - actionName
+        - location
 
     ClearObstacle:
       description: Removes an obstacle
@@ -512,7 +525,7 @@ components:
           readOnly: true
           items:
             oneOf:
-              - $ref: '#/components/schemas/Move'
+              - $ref: '#/components/schemas/PossibleMove'
               - $ref: '#/components/schemas/ClearObstacle'
               - $ref: '#/components/schemas/Teleport'
               - $ref: '#/components/schemas/Smash'
