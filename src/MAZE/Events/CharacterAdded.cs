@@ -14,7 +14,7 @@ namespace MAZE.Events
 
         public Character Character { get; }
 
-        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyAndGetModifiedResources(Game game)
         {
             game.World.Characters.Add(Character);
             yield return Character;

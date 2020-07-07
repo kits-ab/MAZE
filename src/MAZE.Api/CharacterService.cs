@@ -89,7 +89,7 @@ namespace MAZE.Api
                         {
                             await _eventRepository.AddEventAsync(game.Id, @event, version);
 
-                            var changedResources = @event.ApplyToGame(game);
+                            var changedResources = @event.ApplyAndGetModifiedResources(game);
 
                             var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
 

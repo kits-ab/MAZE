@@ -15,7 +15,7 @@ namespace MAZE.Events
 
         public ObstacleId ObstacleId { get; }
 
-        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyAndGetModifiedResources(Game game)
         {
             var obstacleToRemove = game.World.Obstacles.Single(obstacle => obstacle.Id == ObstacleId);
             game.World.Obstacles.Remove(obstacleToRemove);

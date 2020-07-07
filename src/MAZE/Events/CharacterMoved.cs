@@ -19,7 +19,7 @@ namespace MAZE.Events
 
         public int NewLocationId { get; }
 
-        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyAndGetModifiedResources(Game game)
         {
             var characterToMove = game.World.Characters.Single(character => character.Id == CharacterId);
             characterToMove.LocationId = NewLocationId;

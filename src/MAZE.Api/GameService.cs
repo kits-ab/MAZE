@@ -75,7 +75,7 @@ namespace MAZE.Api
                 {
                     var (game, version) = gameAndVersion;
                     var playerJoined = new PlayerJoined(playerName);
-                    var changedResources = playerJoined.ApplyToGame(game);
+                    playerJoined.Apply(game);
                     await _eventRepository.AddEventAsync(gameId, playerJoined, version);
 
                     return Convert(game.Players.Last());

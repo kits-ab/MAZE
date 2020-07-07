@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using GenericDataStructures;
 using MAZE.Models;
@@ -44,7 +43,7 @@ namespace MAZE
 
             foreach (var @event in events)
             {
-                var changedResources = @event.ApplyToGame(game).ToList();
+                @event.Apply(game);
             }
 
             return game;

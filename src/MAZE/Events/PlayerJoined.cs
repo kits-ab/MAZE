@@ -14,7 +14,7 @@ namespace MAZE.Events
 
         public string NewPlayerName { get; }
 
-        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyAndGetModifiedResources(Game game)
         {
             var takenPlayerIds = game.Players.Select(player => player.Id).ToHashSet();
             var newPlayerId = 0;

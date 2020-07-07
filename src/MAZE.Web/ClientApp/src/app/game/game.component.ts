@@ -24,8 +24,23 @@ export class GameComponent implements OnInit {
 
     const game$ = this.gameService.getGame();
     game$.subscribe(game => {
-      const svg = d3.select('svg');
-      svg.attr('viewBox', `${game.world.x} ${game.world.y} ${game.world.width} ${game.world.height}`);
+      const svg = d3.select<SVGElement, null>('svg');
+
+      const svgElement = svg.node();
+
+      if (svgElement == null) {
+        throw new Error('No SVG element found');
+      }
+
+      const viewWidth = svgElement.getBoundingClientRect().width;
+      const viewHeight = svgElement.getBoundingClientRect().height;
+
+      const scale = Math.min(viewWidth / game.world.width, viewHeight / game.world.height);
+      const offsetX = (viewWidth - game.world.width * scale) / 2;
+      const offsetY = (viewHeight - game.world.height * scale) / 2;
+
+      svg.select<SVGGElement>('.game')
+        .style('transform', `translate(${offsetX}px, ${offsetY}px) scale(${scale})`);
 
       svg.select<SVGGElement>('.world')
         .selectAll<SVGRectElement, ITile>('rect')

@@ -25,7 +25,7 @@ namespace MAZE.Events
 
         public List<Obstacle> Obstacles { get; }
 
-        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyToGame(Game game)
+        public override IEnumerable<Union<Player, Character, Location, Obstacle, Path>> ApplyAndGetModifiedResources(Game game)
         {
             if (game.World.Id != null)
             {
