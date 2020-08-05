@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 5.0.5
+  version: 6.0.0
   title: MAZE
   description: MAZE API
 
@@ -399,38 +399,35 @@ components:
         - warrior
         - cleric
 
-    PossibleMove:
-      description: A movement a character can perform
-      properties:
-        actionName:
-          type: string
-          enum:
-            - move
-        location:
-          $ref: '#/components/schemas/LocationId'
-        type:
-          $ref: '#/components/schemas/PathType'
-        numberOfPathsToTravel:
-          description: The number of paths traveled to perform the movement
-          type: integer
-      required:
-        - actionName
-        - location
-        - type
-        - numberOfPathsToTravel
-
     Move:
       description: Moves a character to a new location
       properties:
         actionName:
           type: string
           enum:
-            - move
-        location:
-          $ref: '#/components/schemas/LocationId'
+            - moveWest
+            - moveEast
+            - moveNorth
+            - moveSouth
+        numberOfPathsToTravel:
+          description: The number of paths to travel
+          type: integer
       required:
         - actionName
-        - location
+        - numberOfPathsToTravel
+
+    UsePortal:
+      description: Moves a character a new location through a portal
+      properties:
+        actionName:
+          type: string
+          enum:
+            - usePortal
+        portalPath:
+          $ref: '#/components/schemas/PathId'
+      required:
+        - actionName
+        - portalPath
 
     ClearObstacle:
       description: Removes an obstacle
@@ -525,7 +522,8 @@ components:
           readOnly: true
           items:
             oneOf:
-              - $ref: '#/components/schemas/PossibleMove'
+              - $ref: '#/components/schemas/Move'
+              - $ref: '#/components/schemas/UsePortal'
               - $ref: '#/components/schemas/ClearObstacle'
               - $ref: '#/components/schemas/Teleport'
               - $ref: '#/components/schemas/Smash'
@@ -538,6 +536,7 @@ components:
           items:
             oneOf:
               - $ref: '#/components/schemas/Move'
+              - $ref: '#/components/schemas/UsePortal'
               - $ref: '#/components/schemas/ClearObstacle'
               - $ref: '#/components/schemas/Teleport'
               - $ref: '#/components/schemas/Smash'
