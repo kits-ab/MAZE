@@ -1,1 +1,3 @@
+NOTE: storageAccountKey need to be set in eventstore-deploy.yaml before running
+
 az container create --resource-group MAZE --file eventstore-deploy.yaml
