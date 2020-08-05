@@ -37,7 +37,7 @@ properties:
   - name: filesharevolume
     azureFile:
       sharename: maze
-      storageAccountName: mazestorage
+      storageAccountName: maze
       storageAccountKey: <STORAGE ACCOUNT KEY>
 tags: {}
 type: Microsoft.ContainerInstance/containerGroups
