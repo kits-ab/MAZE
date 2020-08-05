@@ -31,7 +31,10 @@ namespace MAZE.Api
 
             services.AddCors();
 
-            services.AddSignalR()
+            services.AddSignalR(options =>
+                {
+                    options.ClientTimeoutInterval = null;
+                })
                 .AddAzureSignalR();
 
             services.Configure<EventStoreSettings>(_configuration.GetSection("EventStore"));
