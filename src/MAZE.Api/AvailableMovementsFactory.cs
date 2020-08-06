@@ -7,28 +7,48 @@ namespace MAZE.Api
 {
     public class AvailableMovementsFactory
     {
-        public IEnumerable<PossibleMovement> GetAvailableMovements(LocationId atLocationId, Models.World world)
+        public IEnumerable<Move> GetAvailableMovementActions(LocationId atLocationId, Models.World world)
         {
             foreach (var paths in AvailablePathsFactory.GetAvailablePaths(atLocationId, world))
             {
                 var pathDistance = 1;
                 foreach (var path in paths)
                 {
-                    yield return new PossibleMovement(path.To, pathDistance, Convert(path.Type));
+                    if (path.Type == Models.PathType.West ||
+                        path.Type == Models.PathType.East ||
+                        path.Type == Models.PathType.North ||
+                        path.Type == Models.PathType.South)
+                    {
+                        yield return new Move(Convert(path.Type), pathDistance);
+                    }
+
                     pathDistance++;
                 }
             }
         }
 
-        private static PathType Convert(Models.PathType pathType)
+        public IEnumerable<UsePortal> GetAvailablePortalActions(LocationId atLocationId, Models.World world)
+        {
+            foreach (var paths in AvailablePathsFactory.GetAvailablePaths(atLocationId, world))
+            {
+                foreach (var path in paths)
+                {
+                    if (path.Type == Models.PathType.Portal)
+                    {
+                        yield return new UsePortal(path.Id);
+                    }
+                }
+            }
+        }
+
+        private static ActionName Convert(Models.PathType pathType)
         {
             return pathType switch
             {
-                Models.PathType.West => PathType.West,
-                Models.PathType.East => PathType.East,
-                Models.PathType.North => PathType.North,
-                Models.PathType.South => PathType.South,
-                Models.PathType.Portal => PathType.Portal,
+                Models.PathType.West => ActionName.MoveWest,
+                Models.PathType.East => ActionName.MoveEast,
+                Models.PathType.North => ActionName.MoveNorth,
+                Models.PathType.South => ActionName.MoveSouth,
                 _ => throw new ArgumentOutOfRangeException(nameof(pathType), pathType, null)
             };
         }

@@ -4,14 +4,14 @@ namespace MAZE.Api.Contracts
 {
     public class ClearObstacle : IAction
     {
-        public const string Name = "clearObstacle";
+        public const ActionName Name = ActionName.ClearObstacle;
 
         public ClearObstacle(ObstacleId obstacle)
         {
             Obstacle = obstacle;
         }
 
-        public string ActionName => Name;
+        public ActionName ActionName => Name;
 
         public ObstacleId Obstacle { get; }
     }

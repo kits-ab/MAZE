@@ -18,13 +18,13 @@
     font-size: 15px;
   }
 
-  &.move-west, &.move-east, &.move-north, &.move-south {
+  &.moveWest, &.moveEast, &.moveNorth, &.moveSouth {
     button {
       font-size: 0;
     }
   }
 
-  &.move-west {
+  &.moveWest {
     flex-direction: column;
 
     .character {
@@ -41,7 +41,7 @@
     }
   }
 
-  &.move-east {
+  &.moveEast {
     flex-direction: column;
 
     .character {
@@ -58,7 +58,7 @@
     }
   }
 
-  &.move-north {
+  &.moveNorth {
     flex-direction: row;
 
     .character {
@@ -71,7 +71,7 @@
     }
   }
 
-  &.move-south {
+  &.moveSouth {
     flex-direction: row;
     flex: 1;
 

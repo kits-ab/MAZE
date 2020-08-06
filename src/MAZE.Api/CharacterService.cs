@@ -7,8 +7,8 @@ using MAZE.Api.Contracts;
 using MAZE.Events;
 using CharacterId = System.Int32;
 using GameId = System.String;
-using LocationId = System.Int32;
 using ObstacleId = System.Int32;
+using PathId = System.Int32;
 
 namespace MAZE.Api
 {
@@ -65,7 +65,7 @@ namespace MAZE.Api
                 readGameError => ConvertToReadCharacterError(readGameError));
         }
 
-        public async Task<Result<Character, ExecuteActionError>> ExecuteActionAsync(GameId gameId, CharacterId characterId, Union<Move, ClearObstacle> action)
+        public async Task<Result<Character, ExecuteActionError>> ExecuteActionAsync(GameId gameId, CharacterId characterId, Union<Move, UsePortal, ClearObstacle> action)
         {
             var result = await _gameRepository.GetGameAndVersionAsync(gameId);
             return await result.Map(
@@ -81,8 +81,9 @@ namespace MAZE.Api
                     }
 
                     var createEventResult = action.Map(
-                        move => MoveCharacter(game, version, character, move.Location),
-                        clearObstacle => ClearObstacle(game, version, character, clearObstacle.Obstacle));
+                        move => Move(game, character, move.ActionName, move.NumberOfPathsToTravel),
+                        usePortal => UsePortal(game, character, usePortal.PortalPath),
+                        clearObstacle => ClearObstacle(game, character, clearObstacle.Obstacle));
 
                     return await createEventResult.Map<Task<Result<Character, ExecuteActionError>>>(
                         async @event =>
@@ -144,19 +145,54 @@ namespace MAZE.Api
             };
         }
 
-        private Result<Event, ExecuteActionError> MoveCharacter(Models.Game game, long version, Models.Character character, LocationId newLocationId)
+        private static Models.PathType Convert(ActionName actionName)
+        {
+            return actionName switch
+            {
+                ActionName.MoveWest => Models.PathType.West,
+                ActionName.MoveEast => Models.PathType.East,
+                ActionName.MoveNorth => Models.PathType.North,
+                ActionName.MoveSouth => Models.PathType.South,
+                _ => throw new ArgumentOutOfRangeException(nameof(actionName), actionName, null)
+            };
+        }
+
+        private Result<Event, ExecuteActionError> Move(Models.Game game, Models.Character character, ActionName actionName, int numberOfPathsToMove)
         {
             var availableMovements =
-                _availableMovementsFactory.GetAvailableMovements(character.LocationId, game.World);
-            if (availableMovements.All(movement => movement.Location != newLocationId))
+                _availableMovementsFactory.GetAvailableMovementActions(character.LocationId, game.World);
+            if (!availableMovements.Any(movement => movement.ActionName == actionName && movement.NumberOfPathsToTravel == numberOfPathsToMove))
             {
                 return ExecuteActionError.NotAnAvailableAction;
+            }
+
+            var pathType = Convert(actionName);
+
+            var newLocationId = character.LocationId;
+
+            for (var remainingPathsToTraverse = numberOfPathsToMove; remainingPathsToTraverse > 0; remainingPathsToTraverse--)
+            {
+                newLocationId = game.World.Paths.Single(path => path.Type == pathType && path.From == newLocationId).To;
             }
 
             return new CharacterMoved(character.Id, newLocationId);
         }
 
-        private Result<Event, ExecuteActionError> ClearObstacle(Models.Game game, long version, Models.Character character, ObstacleId obstacleId)
+        private Result<Event, ExecuteActionError> UsePortal(Models.Game game, Models.Character character, PathId pathId)
+        {
+            var availablePortals =
+                _availableMovementsFactory.GetAvailablePortalActions(character.LocationId, game.World);
+            if (availablePortals.All(usePortal => usePortal.PortalPath != pathId))
+            {
+                return ExecuteActionError.NotAnAvailableAction;
+            }
+
+            var newLocationId = game.World.Paths.Single(path => path.Id == pathId).To;
+
+            return new CharacterMoved(character.Id, newLocationId);
+        }
+
+        private Result<Event, ExecuteActionError> ClearObstacle(Models.Game game, Models.Character character, ObstacleId obstacleId)
         {
             var obstacleTypeCharacterCanClear = GetObstacleTypeCharacterCanClear(character);
             var availableObstacleRemovals = _availableObstaclesToClearFactory.GetAvailableObstaclesToClear(character.LocationId, obstacleTypeCharacterCanClear, game.World);
@@ -173,12 +209,15 @@ namespace MAZE.Api
 
         private Character CreateCharacter(Models.Character character, Models.World world)
         {
-            var availableMovements = _availableMovementsFactory.GetAvailableMovements(character.LocationId, world);
+            var movementActions = _availableMovementsFactory.GetAvailableMovementActions(character.LocationId, world);
+            var usePortalActions = _availableMovementsFactory.GetAvailablePortalActions(character.LocationId, world);
 
             var obstacleTypeCharacterCanClear = GetObstacleTypeCharacterCanClear(character);
-            var availableObstacleRemovals = _availableObstaclesToClearFactory.GetAvailableObstaclesToClear(character.LocationId, obstacleTypeCharacterCanClear, world);
+            var obstacleRemovalActions = _availableObstaclesToClearFactory.GetAvailableObstaclesToClear(character.LocationId, obstacleTypeCharacterCanClear, world);
 
-            var availableActions = availableMovements.Cast<IAction>().Concat(availableObstacleRemovals);
+            var availableActions = movementActions.Cast<IAction>()
+                .Concat(usePortalActions)
+                .Concat(obstacleRemovalActions);
 
             return new Character(character.Id, character.LocationId, Convert(character.Class), availableActions);
         }

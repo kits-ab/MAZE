@@ -18,12 +18,10 @@ namespace MAZE.Api.Controllers
     public class CharactersController : ControllerBase
     {
         private readonly CharacterService _characterService;
-        private readonly ObstacleService _obstacleService;
 
-        public CharactersController(CharacterService characterService, ObstacleService obstacleService)
+        public CharactersController(CharacterService characterService)
         {
             _characterService = characterService;
-            _obstacleService = obstacleService;
         }
 
         [HttpGet]
@@ -82,11 +80,14 @@ namespace MAZE.Api.Controllers
 
                 if (actionJObject.TryGetValue("actionName", out var actionNameToken))
                 {
-                    var actionName = actionNameToken.Value<string>();
-                    Union<Move, ClearObstacle> action;
+                    var actionName = Enum.Parse<ActionName>(actionNameToken.Value<string>(), true);
+                    Union<Move, UsePortal, ClearObstacle> action;
                     switch (actionName)
                     {
-                        case Move.Name:
+                        case ActionName.MoveWest:
+                        case ActionName.MoveEast:
+                        case ActionName.MoveNorth:
+                        case ActionName.MoveSouth:
                             var move = actionJObject.ToObject<Move>();
                             if (move == null)
                             {
@@ -94,6 +95,16 @@ namespace MAZE.Api.Controllers
                             }
 
                             action = move;
+                            break;
+
+                        case UsePortal.Name:
+                            var usePortal = actionJObject.ToObject<UsePortal>();
+                            if (usePortal == null)
+                            {
+                                return BadRequest("Invalid portal data");
+                            }
+
+                            action = usePortal;
                             break;
 
                         case ClearObstacle.Name:

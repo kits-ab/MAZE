@@ -1,7 +1,9 @@
-﻿namespace MAZE.Api
+﻿using MAZE.Api.Contracts;
+
+namespace MAZE.Api
 {
     public interface IAction
     {
-        string ActionName { get; }
+        ActionName ActionName { get; }
     }
 }

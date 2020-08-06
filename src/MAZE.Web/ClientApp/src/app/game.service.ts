@@ -373,6 +373,8 @@ export type LocationId = number;
 
 export type ObstacleId = number;
 
+export type PathId = number;
+
 export type CharacterId = number;
 
 interface ILocationData {

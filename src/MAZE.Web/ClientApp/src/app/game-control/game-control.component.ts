@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { GamesService, CharacterClass, PatchOperation, Move, ClearObstacle } from '@kokitotsos/maze-client-angular';
-import { LocationId, CharacterId, GameId, ObstacleId } from '../game.service';
+import { GamesService, CharacterClass, PatchOperation, Move, ClearObstacle, UsePortal } from '@kokitotsos/maze-client-angular';
+import { LocationId, CharacterId, GameId, ObstacleId, PathId } from '../game.service';
 import { ActivatedRoute } from '@angular/router';
 import { GameEventService } from '../game-event.service';
 
@@ -15,12 +15,12 @@ export class GameControlComponent implements OnInit {
   private readonly gameEventService = new GameEventService(this.gameId, this.activatedRoute.snapshot.params.playerName);
 
   actionNames: ActionName[] = [
-    'move-west',
-    'move-east',
-    'move-north',
-    'move-south',
-    'use-portal',
-    'clear-obstacle'
+    'moveWest',
+    'moveEast',
+    'moveNorth',
+    'moveSouth',
+    'usePortal',
+    'clearObstacle'
   ];
 
   characters: ICharacter[] = [];
@@ -42,47 +42,48 @@ export class GameControlComponent implements OnInit {
           this.characters = newCharacters.map(newCharacter => {
             const movementActions = new Map<string, IMovementAction>();
 
-            const portalAction: IMovementAction = {
-              name: 'use-portal',
+            const portalAction: IUsePortalAction = {
+              name: 'usePortal',
               description: 'Use portal',
               isAvailable: false,
-              locationId: null
+              portalPathId: null
             };
 
             const clearObstacleAction: IClearObstacleAction = {
-              name: 'clear-obstacle',
+              name: 'clearObstacle',
               description: 'Clear obstacle',
               isAvailable: false,
               obstacleId: null
             }
             
             newCharacter.availableActions.forEach(action => {
-              if (action.actionName == 'move' && action.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps) {
-                if (action.type == 'portal') {
-                  portalAction.isAvailable = true;
-                  portalAction.locationId = action.location;
-                }
-                else {
-                  movementActions.set(action.numberOfPathsToTravel + action.type, this.createMovementAction(action.type, action.numberOfPathsToTravel, action.location));
-                }
-              }
-              else if (action.actionName == 'clearObstacle') {
+              if (action.actionName == 'clearObstacle') {
                 clearObstacleAction.isAvailable = true;
                 clearObstacleAction.obstacleId = action.obstacle;
+              }
+              else if (action.actionName == 'usePortal') {
+                portalAction.isAvailable = true;
+                portalAction.portalPathId = action.portalPath;
+              }
+              else if (action.actionName == 'disarm' || action.actionName == 'heal' || action.actionName == 'smash' || action.actionName == 'teleport') {
+                // Non-implemented actions
+              }
+              else if (action.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps) {
+                movementActions.set(action.numberOfPathsToTravel + action.actionName, this.createMovementAction(action.actionName, action.numberOfPathsToTravel));
               }
             });
 
             const finalMovementActions = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4);
-            const directions: Direction[] = ['west', 'east', 'north', 'south'];
-            directions.forEach((direction, directionIndex) => {
+            const movementActionNames: MovementActionName[] = ['moveWest', 'moveEast', 'moveNorth', 'moveSouth'];
+            movementActionNames.forEach((movementActionName, directionIndex) => {
               for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
-                const existingMovementAction = movementActions.get(movementSteps + direction);
+                const existingMovementAction = movementActions.get(movementSteps + movementActionName);
                 const movementActionIndex = directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1;
                 if (existingMovementAction != null) {
                   finalMovementActions[movementActionIndex] = existingMovementAction;
                 }
                 else {
-                  finalMovementActions[movementActionIndex] = this.createMovementAction(direction, movementSteps);
+                  finalMovementActions[movementActionIndex] = this.createMovementAction(movementActionName, movementSteps, false);
                 }
               }
             });
@@ -105,34 +106,25 @@ export class GameControlComponent implements OnInit {
     });
   }
 
-  private createPortalAction(locationId?: LocationId): IMovementAction {
+  private createMovementAction(actionName: MovementActionName, numberOfSteps: number, isAvailable: boolean = true): IMovementAction {
     return {
-      name: 'use-portal',
-      description: 'Use portal',
-      isAvailable: locationId != null,
-      locationId: locationId === undefined ? null : locationId
+      name: actionName,
+      description: `${numberOfSteps} step${numberOfSteps > 1 ? 's' : ''} ${this.getDirection(actionName)}`,
+      isAvailable: isAvailable,
+      numberOfPathsToTravel: numberOfSteps
     };
   }
 
-  private createMovementAction(direction: Direction, numberOfSteps: number, locationId?: LocationId): IMovementAction {
-    return {
-      name: this.getActionName(direction),
-      description: `${numberOfSteps} step${numberOfSteps > 1 ? 's' : ''} ${direction}`,
-      isAvailable: locationId != null,
-      locationId: locationId === undefined ? null : locationId
-    };
-  }
-
-  private getActionName(direction: Direction): DirectionMovementActionName {
-    switch (direction) {
-      case 'west':
-        return 'move-west';
-      case 'east':
-        return 'move-east';
-      case 'north':
-        return 'move-north';
-      case 'south':
-        return 'move-south';
+  private getDirection(actionName: MovementActionName): Direction {
+    switch (actionName) {
+      case 'moveWest':
+        return 'west';
+      case 'moveEast':
+        return 'east';
+      case 'moveNorth':
+        return 'north';
+      case 'moveSouth':
+        return 'south';
     }
   }
 
@@ -146,25 +138,35 @@ export class GameControlComponent implements OnInit {
 
   executeAction(characterId: CharacterId, action: Action): void {
 
-    let actionToExecute: ClearObstacle | Move | undefined;
+    let actionToExecute: ClearObstacle | Move | UsePortal | undefined;
 
-    if (action.name == "clear-obstacle") {
+    if (action.name == 'clearObstacle') {
       if (action.obstacleId == null) {
         throw new Error('Cannot execute a obstacle removal without an obstacle');
       }
       const clearObstacle: ClearObstacle = {
-        actionName: 'clearObstacle',
+        actionName: action.name,
         obstacle: action.obstacleId
       };
       actionToExecute = clearObstacle;
     }
+    else if (action.name == 'usePortal') {
+      if (action.portalPathId == null) {
+        throw new Error('Cannot execute a use portal without specifying which path to travel');
+      }
+      const usePortal: UsePortal = {
+        actionName: action.name,
+        portalPath: action.portalPathId
+      };
+      actionToExecute = usePortal;
+    }
     else {
-      if (action.locationId == null) {
-        throw new Error('Cannot execute a movement without a location');
+      if (action.numberOfPathsToTravel == null) {
+        throw new Error('Cannot execute a movement without number of steps to travel');
       }
       const move: Move = {
-        actionName: 'move',
-        location: action.locationId
+        actionName: action.name,
+        numberOfPathsToTravel: action.numberOfPathsToTravel
       };
       actionToExecute = move;
     }
@@ -193,7 +195,7 @@ export class GameControlComponent implements OnInit {
 interface ICharacter {
   id: CharacterId;
   characterClass: CharacterClass;
-  actions: Array<IMovementAction | IClearObstacleAction>;
+  actions: Array<Action>;
 }
 
 interface IAction {
@@ -203,20 +205,23 @@ interface IAction {
 
 interface IMovementAction extends IAction {
   name: MovementActionName;
-  locationId: LocationId | null;
+  numberOfPathsToTravel: number;
+}
+
+interface IUsePortalAction extends IAction {
+  name: 'usePortal';
+  portalPathId: PathId | null;
 }
 
 interface IClearObstacleAction extends IAction {
-  name: 'clear-obstacle';
+  name: 'clearObstacle';
   obstacleId: ObstacleId | null;
 }
 
-type DirectionMovementActionName = 'move-west' | 'move-east' | 'move-north' | 'move-south';
+type MovementActionName = 'moveWest' | 'moveEast' | 'moveNorth' | 'moveSouth';
 
-type MovementActionName = DirectionMovementActionName | 'use-portal';
-
-type ActionName = MovementActionName | 'clear-obstacle';
+type ActionName = MovementActionName | 'usePortal' | 'clearObstacle';
 
 type Direction = 'west' | 'east' | 'north' | 'south';
 
-type Action = IMovementAction | IClearObstacleAction;
+type Action = IMovementAction | IUsePortalAction | IClearObstacleAction;
