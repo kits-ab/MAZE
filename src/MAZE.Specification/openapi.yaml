@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 6.1.0
+  version: 6.1.1
   title: MAZE
   description: MAZE API
 
@@ -295,12 +295,14 @@ components:
           type: string
           example: "John Doe"
         actions:
+          readOnly: true
           type: array
           items:
             $ref: '#/components/schemas/ActionName'
       required:
         - id
         - name
+        - actions
 
     LocationId:
       description: A location identifier
