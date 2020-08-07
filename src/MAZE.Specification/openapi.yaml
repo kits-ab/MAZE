@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 6.0.0
+  version: 6.1.0
   title: MAZE
   description: MAZE API
 
@@ -270,6 +270,21 @@ components:
       type: number
       example: 0
 
+    ActionName:
+      description: The name of an action
+      type: string
+      enum:
+        - moveWest
+        - moveEast
+        - moveNorth
+        - moveSouth
+        - usePortal
+        - clearObstacle
+        - teleport
+        - disarm
+        - smash
+        - heal
+
     Player:
       properties:
         id:
@@ -279,6 +294,10 @@ components:
         name:
           type: string
           example: "John Doe"
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionName'
       required:
         - id
         - name
