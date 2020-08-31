@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { GamesService, CharacterClass, PatchOperation, Move, ClearObstacle, UsePortal } from '@kokitotsos/maze-client-angular';
-import { LocationId, CharacterId, GameId, ObstacleId, PathId } from '../game.service';
+import { GamesService, CharacterClass, PatchOperation, Move, ClearObstacle, UsePortal, Player } from '@kokitotsos/maze-client-angular';
+import { CharacterId, GameId, ObstacleId, PathId } from '../game.service';
 import { ActivatedRoute } from '@angular/router';
 import { GameEventService } from '../game-event.service';
+import { combineLatest } from 'rxjs';
+import { filter, flatMap, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-game-control',
@@ -14,16 +16,9 @@ export class GameControlComponent implements OnInit {
   private readonly gameId: GameId = this.activatedRoute.snapshot.params.id;
   private readonly gameEventService = new GameEventService(this.gameId, this.activatedRoute.snapshot.params.playerName);
 
-  actionNames: ActionName[] = [
-    'moveWest',
-    'moveEast',
-    'moveNorth',
-    'moveSouth',
-    'usePortal',
-    'clearObstacle'
-  ];
-
   characters: ICharacter[] = [];
+
+  controlledActionNames: ActionName[] = [];
 
   awaitingNewControls = true;
 
@@ -32,78 +27,112 @@ export class GameControlComponent implements OnInit {
     private readonly gameApi: GamesService) { }
 
   ngOnInit() {
-    this.gameEventService.getToken().subscribe(newToken => {
-      this.gameApi.defaultHeaders = this.gameApi.defaultHeaders.set('Authorization', `Bearer ${newToken}`);
+    const currentPlayer$ = this.gameEventService.getPlayer();
+
+    currentPlayer$.subscribe(player => {
+      this.gameApi.defaultHeaders = this.gameApi.defaultHeaders.set('Authorization', `Bearer ${player.token}`);
     });
 
-    this.gameEventService.getWorldUpdates().subscribe(worldUpdate => {
-      if (worldUpdate.potentiallyChangedResources.includes('characters')) {
-        this.gameApi.getCharacters(this.gameId).subscribe(newCharacters => {
-          this.characters = newCharacters.map(newCharacter => {
-            const movementActions = new Map<string, IMovementAction>();
+    const worldUpdate$ = this.gameEventService.getWorldUpdates();
 
-            const portalAction: IUsePortalAction = {
-              name: 'usePortal',
-              description: 'Use portal',
-              isAvailable: false,
-              portalPathId: null
-            };
+    const players$ = worldUpdate$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('players')))
+      .pipe(flatMap(_ => {
+        return this.gameApi.getPlayers(this.gameId)
+      }));
 
-            const clearObstacleAction: IClearObstacleAction = {
-              name: 'clearObstacle',
-              description: 'Clear obstacle',
-              isAvailable: false,
-              obstacleId: null
-            }
-            
-            newCharacter.availableActions.forEach(action => {
-              if (action.actionName == 'clearObstacle') {
-                clearObstacleAction.isAvailable = true;
-                clearObstacleAction.obstacleId = action.obstacle;
-              }
-              else if (action.actionName == 'usePortal') {
-                portalAction.isAvailable = true;
-                portalAction.portalPathId = action.portalPath;
-              }
-              else if (action.actionName == 'disarm' || action.actionName == 'heal' || action.actionName == 'smash' || action.actionName == 'teleport') {
-                // Non-implemented actions
-              }
-              else if (action.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps) {
-                movementActions.set(action.numberOfPathsToTravel + action.actionName, this.createMovementAction(action.actionName, action.numberOfPathsToTravel));
-              }
-            });
+    const player$ = combineLatest(players$, currentPlayer$)
+      .pipe(map(([players, currentPlayer]) => players.find(player => player.id == currentPlayer.id)))
+      .pipe(filter<Player>(player => player != null));
 
-            const finalMovementActions = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4);
-            const movementActionNames: MovementActionName[] = ['moveWest', 'moveEast', 'moveNorth', 'moveSouth'];
-            movementActionNames.forEach((movementActionName, directionIndex) => {
-              for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
-                const existingMovementAction = movementActions.get(movementSteps + movementActionName);
-                const movementActionIndex = directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1;
-                if (existingMovementAction != null) {
-                  finalMovementActions[movementActionIndex] = existingMovementAction;
-                }
-                else {
-                  finalMovementActions[movementActionIndex] = this.createMovementAction(movementActionName, movementSteps, false);
-                }
-              }
-            });
+    player$.subscribe(player => {
+      this.controlledActionNames = player.actions.filter(this.isSupportedActionName);
+    });
 
-            const actions: Action[] = finalMovementActions;
-            actions.push(portalAction);
-            actions.push(clearObstacleAction);
+    const characters$ = worldUpdate$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('characters')))
+      .pipe(flatMap(_ => this.gameApi.getCharacters(this.gameId)));
 
-            const character: ICharacter = {
-              id: newCharacter.id,
-              characterClass: newCharacter.characterClass,
-              actions: actions
-            };
-            return character;
-          });
+    characters$.subscribe(characters => {
+      this.characters = characters.map(character => {
+        const movementActions = new Map<string, IMovementAction>();
 
-          this.awaitingNewControls = false;
+        const portalAction: IUsePortalAction = {
+          name: 'usePortal',
+          description: 'Use portal',
+          isAvailable: false,
+          portalPathId: null
+        };
+
+        const clearObstacleAction: IClearObstacleAction = {
+          name: 'clearObstacle',
+          description: 'Clear obstacle',
+          isAvailable: false,
+          obstacleId: null
+        }
+
+        character.availableActions.forEach(action => {
+          if (action.actionName == 'clearObstacle') {
+            clearObstacleAction.isAvailable = true;
+            clearObstacleAction.obstacleId = action.obstacle;
+          }
+          else if (action.actionName == 'usePortal') {
+            portalAction.isAvailable = true;
+            portalAction.portalPathId = action.portalPath;
+          }
+          else if (action.actionName == 'disarm' || action.actionName == 'heal' || action.actionName == 'smash' || action.actionName == 'teleport') {
+            // Non-implemented actions
+          }
+          else if (action.numberOfPathsToTravel <= GameControlComponent.maxNumberOfSteps) {
+            movementActions.set(action.numberOfPathsToTravel + action.actionName, this.createMovementAction(action.actionName, action.numberOfPathsToTravel));
+          }
         });
-      }
+
+        const finalMovementActions = new Array<IMovementAction>(GameControlComponent.maxNumberOfSteps * 4);
+        const movementActionNames: MovementActionName[] = ['moveWest', 'moveEast', 'moveNorth', 'moveSouth'];
+        movementActionNames.forEach((movementActionName, directionIndex) => {
+          for (let movementSteps = 1; movementSteps <= GameControlComponent.maxNumberOfSteps; movementSteps++) {
+            const existingMovementAction = movementActions.get(movementSteps + movementActionName);
+            const movementActionIndex = directionIndex * GameControlComponent.maxNumberOfSteps + movementSteps - 1;
+            if (existingMovementAction != null) {
+              finalMovementActions[movementActionIndex] = existingMovementAction;
+            }
+            else {
+              finalMovementActions[movementActionIndex] = this.createMovementAction(movementActionName, movementSteps, false);
+            }
+          }
+        });
+
+        const actions: Action[] = finalMovementActions;
+        actions.push(portalAction);
+        actions.push(clearObstacleAction);
+
+        const newCharacter: ICharacter = {
+          id: character.id,
+          characterClass: character.characterClass,
+          actions: actions
+        };
+        return newCharacter;
+      });
+
+      this.awaitingNewControls = false;
     });
+  }
+
+  private isSupportedActionName(actionName: string): actionName is ActionName {
+    switch (actionName) {
+      case 'moveWest':
+      case 'moveEast':
+      case 'moveNorth':
+      case 'moveSouth':
+      case 'usePortal':
+      case 'clearObstacle':
+        const typedActionName: ActionName = actionName;
+        return typedActionName != null;
+
+      default:
+        return false;
+    }
   }
 
   private createMovementAction(actionName: MovementActionName, numberOfSteps: number, isAvailable: boolean = true): IMovementAction {

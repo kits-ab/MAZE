@@ -1,4 +1,5 @@
-﻿using PlayerId = System.Int32;
+﻿using System.Collections.Generic;
+using PlayerId = System.Int32;
 
 namespace MAZE.Models
 {
@@ -13,5 +14,7 @@ namespace MAZE.Models
         public PlayerId Id { get; }
 
         public string Name { get; }
+
+        public List<ActionName> Actions { get; } = new List<ActionName>();
     }
 }

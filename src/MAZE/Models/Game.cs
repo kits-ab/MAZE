@@ -12,6 +12,8 @@ namespace MAZE.Models
 
         public GameId Id { get; }
 
+        public int RandomSeed { get; set; }
+
         public World World { get; } = new World();
 
         public List<Player> Players { get; } = new List<Player>();

@@ -18,13 +18,20 @@ namespace MAZE.Api
         private readonly WorldSerializer _worldSerializer;
         private readonly GameRepository _gameRepository;
         private readonly EventRepository _eventRepository;
+        private readonly GameEventService _gameEventService;
 
-        public GameService(IHostEnvironment environment, WorldSerializer worldSerializer, GameRepository gameRepository, EventRepository eventRepository)
+        public GameService(
+            IHostEnvironment environment,
+            WorldSerializer worldSerializer,
+            GameRepository gameRepository,
+            EventRepository eventRepository,
+            GameEventService gameEventService)
         {
             _environment = environment;
             _worldSerializer = worldSerializer;
             _gameRepository = gameRepository;
             _eventRepository = eventRepository;
+            _gameEventService = gameEventService;
         }
 
         public async Task<Result<Game, NewGameError>> NewGameAsync(WorldId worldId)
@@ -36,13 +43,15 @@ namespace MAZE.Api
                 return NewGameError.WorldNotFound;
             }
 
-            List<Event> gameCreationEvents;
-            using (var worldStream = System.IO.File.OpenRead(worldFilePath))
+            List<Event> worldCreationEvents;
+            await using (var worldStream = System.IO.File.OpenRead(worldFilePath))
             {
-                gameCreationEvents = _worldSerializer.Deserialize(worldId, worldStream).ToList();
+                worldCreationEvents = _worldSerializer.Deserialize(worldId, worldStream).ToList();
             }
 
             var newGameId = Guid.NewGuid().ToString();
+
+            var gameCreationEvents = worldCreationEvents.Prepend(new RandomSeedSet(new Random().Next()));
 
             await _eventRepository.AddEventsAsync(newGameId, gameCreationEvents);
 
@@ -75,8 +84,12 @@ namespace MAZE.Api
                 {
                     var (game, version) = gameAndVersion;
                     var playerJoined = new PlayerJoined(playerName);
-                    playerJoined.Apply(game);
                     await _eventRepository.AddEventAsync(gameId, playerJoined, version);
+
+                    var changedResources = playerJoined.ApplyAndGetModifiedResources(game);
+                    var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
+
+                    await _gameEventService.NotifyWorldUpdatedAsync(game.Id, changedResourceNames.ToArray());
 
                     return Convert(game.Players.Last());
                 },
@@ -111,6 +124,12 @@ namespace MAZE.Api
 
                     var playerLeft = new PlayerLeft(playerId);
                     await _eventRepository.AddEventAsync(gameId, playerLeft, version);
+
+                    var changedResources = playerLeft.ApplyAndGetModifiedResources(game);
+                    var changedResourceNames = ChangedResourcesResolver.GetResourceNames(changedResources);
+
+                    await _gameEventService.NotifyWorldUpdatedAsync(game.Id, changedResourceNames.ToArray());
+
                     return VoidResult<LeaveGameError>.Success;
                 },
                 readGameError =>
@@ -131,9 +150,27 @@ namespace MAZE.Api
             };
         }
 
-        private static Contracts.Player Convert(Models.Player player)
+        private static Player Convert(Models.Player player)
         {
-            return new Contracts.Player(player.Id, player.Name);
+            return new Player(player.Id, player.Name, player.Actions.Select(Convert));
+        }
+
+        private static ActionName Convert(Models.ActionName actionName)
+        {
+            return actionName switch
+            {
+                Models.ActionName.MoveWest => ActionName.MoveWest,
+                Models.ActionName.MoveEast => ActionName.MoveEast,
+                Models.ActionName.MoveNorth => ActionName.MoveNorth,
+                Models.ActionName.MoveSouth => ActionName.MoveSouth,
+                Models.ActionName.UsePortal => ActionName.UsePortal,
+                Models.ActionName.ClearObstacle => ActionName.ClearObstacle,
+                Models.ActionName.Teleport => ActionName.Teleport,
+                Models.ActionName.Disarm => ActionName.Disarm,
+                Models.ActionName.Smash => ActionName.Smash,
+                Models.ActionName.Heal => ActionName.Heal,
+                _ => throw new ArgumentOutOfRangeException(nameof(actionName), actionName, null)
+            };
         }
     }
 }

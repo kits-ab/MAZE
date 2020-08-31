@@ -1,11 +1,11 @@
 import * as signalR from '@microsoft/signalr';
-import { GameId } from './game.service';
+import { GameId, PlayerId } from './game.service';
 import { Observable, Subject, ReplaySubject } from 'rxjs';
 import { environment } from '../environments/environment';
 
 export class GameEventService {
   private readonly worldUpdates = new Subject<IWorldUpdated>();
-  private readonly token = new ReplaySubject<string>(1);
+  private readonly player = new ReplaySubject<IPlayer>(1);
 
   constructor(gameId: GameId, playerName?: string) {
     let connectionUrl = `${environment.apiUrl}/gameEvents?gameId=${gameId}`;
@@ -18,8 +18,12 @@ export class GameEventService {
       .withUrl(connectionUrl)
       .build();
 
-    connection.on('NewToken', (newToken: INewToken) => {
-      this.token.next(newToken.token);
+    connection.on('NewPlayer', (newPlayer: INewPlayer) => {
+      const player: IPlayer = {
+        id: newPlayer.playerId,
+        token: newPlayer.token
+      }
+      this.player.next(player);
     });
 
     connection.on('WorldUpdated', (worldUpdated: IWorldUpdated) => {
@@ -33,8 +37,8 @@ export class GameEventService {
     return this.worldUpdates;
   }
 
-  getToken(): Observable<string> {
-    return this.token;
+  getPlayer(): Observable<IPlayer> {
+    return this.player;
   }
 }
 
@@ -42,6 +46,12 @@ interface IWorldUpdated {
   potentiallyChangedResources: string[];
 }
 
-interface INewToken {
+interface INewPlayer {
+  playerId: PlayerId;
+  token: string;
+}
+
+export interface IPlayer {
+  id: PlayerId;
   token: string;
 }

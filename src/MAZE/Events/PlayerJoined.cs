@@ -25,6 +25,8 @@ namespace MAZE.Events
 
             var newPlayer = new Player(newPlayerId, NewPlayerName);
             game.Players.Add(newPlayer);
+            var actionSets = ActionSetsFactory.GetActionSets(game.Players.Count);
+            ActionSetAssigner.Assign(actionSets, game.Players, game.RandomSeed);
             yield return newPlayer;
         }
     }

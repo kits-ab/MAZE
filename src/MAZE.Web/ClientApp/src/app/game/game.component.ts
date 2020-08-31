@@ -42,17 +42,19 @@ export class GameComponent implements OnInit {
       svg.select<SVGGElement>('.game')
         .style('transform', `translate(${offsetX}px, ${offsetY}px) scale(${scale})`);
 
-      svg.select<SVGGElement>('.world')
+      const tiles = svg.select<SVGGElement>('.world')
         .selectAll<SVGRectElement, ITile>('rect')
         .data<ITile>(game.world.tiles, tile => `${tile.type} ${tile.x} ${tile.y} ${tile.width} ${tile.height}`)
-        .enter()
+            
+      tiles.enter()
         .append('rect')
         .attr('x', tile => tile.x)
         .attr('y', tile => tile.y)
         .attr('width', tile => tile.width)
         .attr('height', tile => tile.height)
-        .attr('fill', location => `url(#${location.type})`)
-        .exit()
+        .attr('fill', location => `url(#${location.type})`);
+
+      tiles.exit()
         .remove();
 
       const characters = svg.select<SVGGElement>('.characters')

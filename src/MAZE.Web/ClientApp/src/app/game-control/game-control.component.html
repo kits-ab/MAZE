@@ -1,5 +1,5 @@
 <div class="actions">
-  <div class="action" [ngClass]="actionName" *ngFor="let actionName of actionNames">
+  <div class="action" [ngClass]="actionName" *ngFor="let actionName of controlledActionNames">
     <div class="character" *ngFor="let character of characters">
       <span class="action-name" [ngClass]="character.characterClass">{{character.characterClass}} {{actionName}}:</span>
       <button type="button" *ngFor="let action of getActions(character, actionName)" [disabled]="!action.isAvailable || !actionsCanBeUsed()" (click)="executeAction(character.id, action)">{{ action.description }}</button>

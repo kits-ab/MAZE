@@ -1,6 +1,6 @@
 import { GamesService, Location, Path, Character } from '@kokitotsos/maze-client-angular';
 import { Observable, combineLatest, of } from 'rxjs';
-import { map, flatMap } from 'rxjs/operators';
+import { map, flatMap, filter } from 'rxjs/operators';
 import { GameEventService } from './game-event.service';
 
 export class GameService {
@@ -13,55 +13,49 @@ export class GameService {
   }
 
   getGame(): Observable<IGame> {
-    let latestLocations: Location[] | undefined;
-    let latestPaths: Path[] | undefined;
-    let latestWorld: IWorld | undefined;
-    let latestCharacters: Character[] | undefined;
-
     const worldUpdates$ = this.gameEventService.getWorldUpdates();
 
-    return worldUpdates$.pipe(flatMap(worldUpdate => {
-      const locationsChanged = worldUpdate.potentiallyChangedResources.includes('locations');
-      const pathsChanged = worldUpdate.potentiallyChangedResources.includes('paths');
-      const charactersChanged = worldUpdate.potentiallyChangedResources.includes('characters');
+    let latestLocations: Location[] = [];
+    let latestPaths: Path[] = [];
 
-      const locations$ = locationsChanged ? this.gamesApi.getLocations(this.gameId) : of(latestLocations);
-      const paths$ = pathsChanged ? this.gamesApi.getPaths(this.gameId) : of(latestPaths);
-      const world$ = locationsChanged || pathsChanged ? combineLatest(locations$, paths$)
-        .pipe(map(([locations, paths]) => {
-          latestLocations = locations;
-          latestPaths = paths;
-          if (latestLocations == null || latestPaths == null) {
-            throw new Error('Locations and paths should be loaded');
-          }
-          const locationData = this.buildLocationData(latestLocations, latestPaths);
-          const locationPositions = this.buildLocationPositions(locationData);
-          const tiles = this.buildTiles(locationData);
-          const world = this.createWorld(tiles, locationPositions);
-          latestWorld = world;
-          return world;
-        })) : of(latestWorld);
+    const locationsAndPaths$ = worldUpdates$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('locations') || worldUpdate.potentiallyChangedResources.includes('paths')))
+      .pipe(flatMap(worldUpdate => {
+        const locations$ = worldUpdate.potentiallyChangedResources.includes('locations') ? this.gamesApi.getLocations(this.gameId) : of(latestLocations);
+        const paths$ = worldUpdate.potentiallyChangedResources.includes('paths') ? this.gamesApi.getPaths(this.gameId) : of(latestPaths);
 
-      const characters$ = charactersChanged ? this.gamesApi.getCharacters(this.gameId) : of(latestCharacters);
+        return combineLatest(locations$, paths$);
+      }));
 
-      return combineLatest(world$, characters$).pipe(map(([world, characters]) => {
-        latestCharacters = characters;
+    const characters$ = worldUpdates$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('characters')))
+      .pipe(flatMap(_ => this.gamesApi.getCharacters(this.gameId)));
 
-        if (world == null || characters == null) {
-          throw new Error('World and characters should be loaded');
-        }
+    const world$ = locationsAndPaths$
+      .pipe(map(([locations, paths]) => {
+        latestLocations = locations;
+        latestPaths = paths;
+        const locationData = this.buildLocationData(locations, paths);
+        const locationPositions = this.buildLocationPositions(locationData);
+        const tiles = this.buildTiles(locationData);
+        const world = this.createWorld(tiles, locationPositions);
+        return world;
+      }));
 
+    const game$ = combineLatest(world$, characters$)
+      .pipe(map(([world, characters]) => {
         const game: IGame = {
           world: world,
-          characters: characters
+          characters: characters.filter(character => world.locationPositions.get(character.location) != null)
         };
 
         return game;
       }));
-    }));
+
+    return game$;
   }
 
-  private buildLocationData(locations: Location[], paths: Path[]): Map<LocationId, ILocationData> {
+  private buildLocationData(locations: Location[], paths: Path[]): ILocationData[] {
     const originLocationId = locations[0].id;
     const locationData = new Map<LocationId, ILocationData>(locations.map<[LocationId, ILocationData]>(location => [
       location.id,
@@ -137,11 +131,12 @@ export class GameService {
       this.traversePaths(originNeighborLocationId, originLocationId, directionFromParent, locationData, pathConnections);
     });
 
-    return locationData;
+    return [...locationData.values()]
+      .filter(locationData => locationData.x != null && locationData.y != null);
   }
 
-  private buildLocationPositions(locationData: Map<LocationId, ILocationData>): Map<LocationId, IPosition> {
-    const locations = [...locationData.values()].map(this.convertToLocationEntry);
+  private buildLocationPositions(locationData: ILocationData[]): Map<LocationId, IPosition> {
+    const locations = locationData.map(this.convertToLocationEntry);
     return new Map<LocationId, IPosition>(locations);
   }
 
@@ -152,7 +147,7 @@ export class GameService {
     return [location.locationId, { x: location.x + GameService.tileSize / 2, y: location.y + GameService.tileSize / 2 }];
   }
 
-  private buildTiles(locationData: Map<LocationId, ILocationData>): ITile[] {
+  private buildTiles(locationData: ILocationData[]): ITile[] {
     const tiles: ITile[] = [];
 
     locationData.forEach(location => {
@@ -376,6 +371,8 @@ export type ObstacleId = number;
 export type PathId = number;
 
 export type CharacterId = number;
+
+export type PlayerId = number;
 
 interface ILocationData {
   locationId: LocationId;

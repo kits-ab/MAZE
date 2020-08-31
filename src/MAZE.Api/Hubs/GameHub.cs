@@ -45,7 +45,7 @@ namespace MAZE.Api.Hubs
                         if (result.TryGetSuccessValue(out var player))
                         {
                             var token = _tokenFactory.CreateJwtToken(gameId, player.Id);
-                            await Clients.Caller.SendAsync(nameof(NewToken), new NewToken(token));
+                            await Clients.Caller.SendAsync(nameof(NewPlayer), new NewPlayer(player.Id, token));
                             joinedGames.Add(new JoinedGame(gameId, player.Id));
                         }
                         else
