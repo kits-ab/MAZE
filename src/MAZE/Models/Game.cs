@@ -5,6 +5,8 @@ namespace MAZE.Models
 {
     public class Game
     {
+        public const int MaxNumberOfPlayers = 8;
+
         public Game(GameId id)
         {
             Id = id;

@@ -10,24 +10,6 @@
     }
 }
 
-.join-game {
-    width: 1em;
-    height: 1em;
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0.5;
-    transition-duration: 0.5s;
-    transition-timing-function: ease-out;
-    transition-property: opacity, width, height;
-}
-
-.join-game:hover {
-    opacity: 1;
-    width: 20em;
-    height: 20em;
-}
-
 svg {
     background-color: black;
     width: 100%;
@@ -38,4 +20,32 @@ svg {
     transition-property: x, y;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
+}
+
+.join-game {
+  width: 1em;
+  height: 1em;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.5;
+  transition-duration: 0.5s;
+  transition-timing-function: ease-out;
+  transition-property: opacity, width, height;
+
+  &:hover {
+    opacity: 1;
+    width: 20em;
+    height: 20em;
+  }
+}
+
+.players {
+  width: 20em;
+  height: 20em;
+  position: absolute;
+  left: 1em;
+  top: 1em;
+  color: white;
+  font-size: 1em;
 }

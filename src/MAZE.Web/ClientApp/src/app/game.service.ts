@@ -1,4 +1,4 @@
-import { GamesService, Location, Path, Character } from '@kokitotsos/maze-client-angular';
+import { GamesService, Location, Path, Character, CharacterClass, Player } from '@kokitotsos/maze-client-angular';
 import { Observable, combineLatest, of } from 'rxjs';
 import { map, flatMap, filter } from 'rxjs/operators';
 import { GameEventService } from './game-event.service';
@@ -31,6 +31,10 @@ export class GameService {
       .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('characters')))
       .pipe(flatMap(_ => this.gamesApi.getCharacters(this.gameId)));
 
+    const players$ = worldUpdates$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('players')))
+      .pipe(flatMap(_ => this.gamesApi.getPlayers(this.gameId)));
+
     const world$ = locationsAndPaths$
       .pipe(map(([locations, paths]) => {
         latestLocations = locations;
@@ -42,17 +46,39 @@ export class GameService {
         return world;
       }));
 
-    const game$ = combineLatest(world$, characters$)
-      .pipe(map(([world, characters]) => {
+    const game$ = combineLatest(world$, characters$, players$)
+      .pipe(map(([world, characterDtos, playerDtos]) => {
+        const characters: ICharacter[] = characterDtos
+          .filter(character => world.locationPositions.get(character.location) != null)
+          .map(this.convertCharacter);
+
+        const players: IPlayer[] = playerDtos.map(this.convertPlayer);
+
         const game: IGame = {
           world: world,
-          characters: characters.filter(character => world.locationPositions.get(character.location) != null)
+          characters: characters,
+          players: players
         };
 
         return game;
       }));
 
     return game$;
+  }
+
+  private convertCharacter(character: Character): ICharacter {
+    return {
+      id: character.id,
+      location: character.location,
+      characterClass: character.characterClass
+    };
+  }
+
+  private convertPlayer(player: Player): IPlayer {
+    return {
+      id: player.id,
+      name: player.name
+    };
   }
 
   private buildLocationData(locations: Location[], paths: Path[]): ILocationData[] {
@@ -396,7 +422,19 @@ interface ILocationData {
 
 export interface IGame {
   world: IWorld;
-  characters: Character[];
+  characters: ICharacter[];
+  players: IPlayer[];
+}
+
+export interface ICharacter {
+  id: CharacterId;
+  location: LocationId;
+  characterClass: CharacterClass;
+}
+
+export interface IPlayer {
+  id: PlayerId;
+  name: string;
 }
 
 export interface IWorld {

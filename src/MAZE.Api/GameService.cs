@@ -76,13 +76,19 @@ namespace MAZE.Api
                 readGameError => readGameError);
         }
 
-        public async Task<Result<Player, ReadGameError>> JoinGameAsync(GameId gameId, string playerName)
+        public async Task<Result<Player, JoinGameError>> JoinGameAsync(GameId gameId, string playerName)
         {
             var result = await _gameRepository.GetGameAndVersionAsync(gameId);
-            return await result.Map<Task<Result<Player, ReadGameError>>>(
+            return await result.Map<Task<Result<Player, JoinGameError>>>(
                 async gameAndVersion =>
                 {
                     var (game, version) = gameAndVersion;
+
+                    if (game.Players.Count >= Models.Game.MaxNumberOfPlayers)
+                    {
+                        return JoinGameError.GameFull;
+                    }
+
                     var playerJoined = new PlayerJoined(playerName);
                     await _eventRepository.AddEventAsync(gameId, playerJoined, version);
 
@@ -93,7 +99,14 @@ namespace MAZE.Api
 
                     return Convert(game.Players.Last());
                 },
-                readGameError => Task.FromResult(new Result<Player, ReadGameError>(readGameError)));
+                readGameError =>
+                {
+                    return readGameError switch
+                    {
+                        ReadGameError.NotFound => Task.FromResult(new Result<Player, JoinGameError>(JoinGameError.GameNotFound)),
+                        _ => throw new ArgumentOutOfRangeException(nameof(readGameError), readGameError, null)
+                    };
+                });
         }
 
         public async Task<Result<IEnumerable<Player>, ReadGameError>> GetPlayersAsync(GameId gameId)
@@ -142,9 +155,9 @@ namespace MAZE.Api
                 });
         }
 
-        private static Contracts.Game Convert(Models.Game game)
+        private static Game Convert(Models.Game game)
         {
-            return new Contracts.Game(game.World.Id)
+            return new Game(game.World.Id)
             {
                 Id = game.Id,
             };
