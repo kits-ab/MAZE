@@ -1,4 +1,4 @@
-import { GamesService, Location, Path, Character, CharacterClass, Player } from '@kokitotsos/maze-client-angular';
+import { GamesService, Location, Path, Character, CharacterClass, Player, Obstacle } from '@kokitotsos/maze-client-angular';
 import { Observable, combineLatest, of } from 'rxjs';
 import { map, flatMap, filter } from 'rxjs/operators';
 import { GameEventService } from './game-event.service';
@@ -35,11 +35,15 @@ export class GameService {
       .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('players')))
       .pipe(flatMap(_ => this.gamesApi.getPlayers(this.gameId)));
 
-    const world$ = locationsAndPaths$
-      .pipe(map(([locations, paths]) => {
+    const obstacles$ = worldUpdates$
+      .pipe(filter(worldUpdate => worldUpdate.potentiallyChangedResources.includes('obstacles')))
+      .pipe(flatMap(_ => this.gamesApi.getObstacles(this.gameId)));
+
+    const world$ = combineLatest(locationsAndPaths$, obstacles$)
+      .pipe(map(([[locations, paths], obstacles]) => {
         latestLocations = locations;
         latestPaths = paths;
-        const locationData = this.buildLocationData(locations, paths);
+        const locationData = this.buildLocationData(locations, paths, obstacles);
         const locationPositions = this.buildLocationPositions(locationData);
         const tiles = this.buildTiles(locationData);
         const world = this.createWorld(tiles, locationPositions);
@@ -81,7 +85,7 @@ export class GameService {
     };
   }
 
-  private buildLocationData(locations: Location[], paths: Path[]): ILocationData[] {
+  private buildLocationData(locations: Location[], paths: Path[], obstacles: Obstacle[]): ILocationData[] {
     const originLocationId = locations[0].id;
     const locationData = new Map<LocationId, ILocationData>(locations.map<[LocationId, ILocationData]>(location => [
       location.id,
@@ -90,14 +94,10 @@ export class GameService {
         x: undefined,
         y: undefined,
         visited: false,
-        hasPathWest: false,
-        locationWest: null,
-        hasPathEast: false,
-        locationEast: null,
-        hasPathNorth: false,
-        locationNorth: null,
-        hasPathSouth: false,
-        locationSouth: null
+        pathWest: null,
+        pathEast: null,
+        pathNorth: null,
+        pathSouth: null,
       }]));
     const originLocationPosition = locationData.get(originLocationId);
     if (originLocationPosition == null) {
@@ -121,26 +121,36 @@ export class GameService {
         if (location != null) {
           const connectedLocation = locationData.get(path.to);
           const neighborLocation = connectedLocation === undefined ? null : connectedLocation;
+          const blockingObstacle = obstacles.find(obstacle => obstacle.blockedPaths.includes(path.id));
+          const pathState: PathState = blockingObstacle == null ? 'open' : this.convertToBlockade(blockingObstacle.type);
 
           switch (path.type) {
             case 'west':
-              location.hasPathWest = true;
-              location.locationWest = neighborLocation;
+              location.pathWest = {
+                state: pathState,
+                location: neighborLocation
+              };
               break;
 
             case 'east':
-              location.hasPathEast = true;
-              location.locationEast = neighborLocation;
+              location.pathEast = {
+                state: pathState,
+                location: neighborLocation
+              };
               break;
 
             case 'north':
-              location.hasPathNorth = true;
-              location.locationNorth = neighborLocation;
+              location.pathNorth = {
+                state: pathState,
+                location: neighborLocation
+              };
               break;
 
             case 'south':
-              location.hasPathSouth = true;
-              location.locationSouth = neighborLocation;
+              location.pathSouth = {
+                state: pathState,
+                location: neighborLocation
+              };
               break;
           }
         }
@@ -166,6 +176,22 @@ export class GameService {
     return new Map<LocationId, IPosition>(locations);
   }
 
+  private convertToBlockade(obstacleType: Obstacle.TypeEnum): Blockade {
+    switch (obstacleType) {
+      case 'forceField':
+        return 'force-wall';
+
+      case 'lock':
+        return 'lock';
+
+      case 'stone':
+        return 'stone';
+
+      case 'ghost':
+        return 'spirits';
+    }
+  }
+
   private convertToLocationEntry(location: ILocationData): [LocationId, IPosition] {
     if (location.x == null || location.y == null) {
       throw new Error('Cannot convert a location data without position');
@@ -189,7 +215,7 @@ export class GameService {
         type: 'floor'
       });
 
-      const hasInnerCornerRightBottom = !location.hasPathWest && !location.hasPathNorth;
+      const hasInnerCornerRightBottom = location.pathWest === null && location.pathNorth === null;
       if (hasInnerCornerRightBottom) {
         tiles.push({
           x: location.x,
@@ -200,7 +226,7 @@ export class GameService {
         });
       }
 
-      const hasInnerCornerLeftBottom = !location.hasPathEast && !location.hasPathNorth;
+      const hasInnerCornerLeftBottom = location.pathEast === null && location.pathNorth === null;
       if (hasInnerCornerLeftBottom) {
         tiles.push({
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
@@ -211,7 +237,7 @@ export class GameService {
         });
       }
 
-      const hasInnerCornerRightTop = !location.hasPathWest && !location.hasPathSouth;
+      const hasInnerCornerRightTop = location.pathWest === null && location.pathSouth === null;
       if (hasInnerCornerRightTop) {
         tiles.push({
           x: location.x,
@@ -222,7 +248,7 @@ export class GameService {
         });
       }
 
-      const hasInnerCornerLeftTop = !location.hasPathEast && !location.hasPathSouth;
+      const hasInnerCornerLeftTop = location.pathEast === null && location.pathSouth === null;
       if (hasInnerCornerLeftTop) {
         tiles.push({
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
@@ -233,47 +259,8 @@ export class GameService {
         });
       }
 
-      if (!location.hasPathWest) {
-        tiles.push({
-            x: location.x,
-            y: location.y + (hasInnerCornerRightBottom ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
-            width: GameService.tileSize / GameService.wallsPerTile,
-            height: GameService.tileSize - ((hasInnerCornerRightBottom ? 1 : 0) + (hasInnerCornerRightTop ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
-            type: 'wall-left'
-          });
-      }
-
-      if (!location.hasPathEast) {
-        tiles.push({
-            x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-            y: location.y + (hasInnerCornerLeftBottom ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
-            width: GameService.tileSize / GameService.wallsPerTile,
-            height: GameService.tileSize - ((hasInnerCornerLeftBottom ? 1 : 0) + (hasInnerCornerLeftTop ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
-            type: 'wall-right'
-          });
-      }
-
-      if (!location.hasPathNorth) {
-        tiles.push({
-            x: location.x + (hasInnerCornerRightBottom ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
-            y: location.y,
-            width: GameService.tileSize - ((hasInnerCornerRightBottom ? 1 : 0) + (hasInnerCornerLeftBottom ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
-            height: GameService.tileSize / GameService.wallsPerTile,
-            type: 'wall-top'
-          });
-        }
-
-      if (!location.hasPathSouth) {
-        tiles.push({
-            x: location.x + (hasInnerCornerRightTop ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
-            y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
-            width: GameService.tileSize - ((hasInnerCornerRightTop ? 1 : 0) + (hasInnerCornerLeftTop ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
-            height: GameService.tileSize / GameService.wallsPerTile,
-            type: 'wall-bottom'
-          });
-      }
-
-      if (location.hasPathNorth && location.hasPathEast && (location.locationNorth != null && !location.locationNorth.hasPathEast || location.locationEast != null && !location.locationEast.hasPathNorth)) {
+      const hasOuterCornerRightTop = location.pathNorth !== null && location.pathEast !== null && (location.pathNorth.location !== null && location.pathNorth.location.pathEast === null || location.pathEast.location !== null && location.pathEast.location.pathNorth === null);
+      if (hasOuterCornerRightTop) {
         tiles.push({
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y,
@@ -283,7 +270,8 @@ export class GameService {
         });
       }
 
-      if (location.hasPathNorth && location.hasPathWest && (location.locationNorth != null && !location.locationNorth.hasPathWest || location.locationWest != null && !location.locationWest.hasPathNorth)) {
+      const hasOuterCornerLeftTop = location.pathNorth !== null && location.pathWest !== null && (location.pathNorth.location !== null && location.pathNorth.location.pathWest === null || location.pathWest.location !== null && location.pathWest.location.pathNorth === null);
+      if (hasOuterCornerLeftTop) {
         tiles.push({
           x: location.x,
           y: location.y,
@@ -293,7 +281,8 @@ export class GameService {
         });
       }
 
-      if (location.hasPathSouth && location.hasPathEast && (location.locationSouth != null && !location.locationSouth.hasPathEast || location.locationEast != null && !location.locationEast.hasPathSouth)) {
+      const hasOuterCornerRightBottom = location.pathSouth !== null && location.pathEast !== null && (location.pathSouth.location !== null && location.pathSouth.location.pathEast === null || location.pathEast.location !== null && location.pathEast.location.pathSouth === null);
+      if (hasOuterCornerRightBottom) {
         tiles.push({
           x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
@@ -303,13 +292,67 @@ export class GameService {
         });
       }
 
-      if (location.hasPathSouth && location.hasPathWest && (location.locationSouth != null && !location.locationSouth.hasPathWest || location.locationWest != null && !location.locationWest.hasPathSouth)) {
+      const hasOuterCornerLeftBottom = location.pathSouth !== null && location.pathWest !== null && (location.pathSouth.location !== null && location.pathSouth.location.pathWest === null || location.pathWest.location !== null && location.pathWest.location.pathSouth === null);
+      if (hasOuterCornerLeftBottom) {
         tiles.push({
           x: location.x,
           y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
           width: GameService.tileSize / GameService.wallsPerTile,
           height: GameService.tileSize / GameService.wallsPerTile,
           type: 'wall-corner-outer-left-bottom'
+        });
+      }
+
+      const isTopLeftCornerOccupied = hasInnerCornerRightBottom || hasOuterCornerLeftTop;
+      const isTopRightCornerOccupied = hasInnerCornerLeftBottom || hasOuterCornerRightTop;
+      const isBottomLeftCornerOccupied = hasInnerCornerRightTop || hasOuterCornerLeftBottom;
+      const isBottomRightCornerOccupied = hasInnerCornerLeftTop || hasOuterCornerRightBottom;
+
+      if (location.pathWest === null || location.pathWest.state !== 'open') {
+        const isExpansionNorthBlocked = isTopLeftCornerOccupied || location.pathNorth === null;
+        const isExpansionSouthBlocked = isBottomLeftCornerOccupied || location.pathSouth === null;
+        tiles.push({
+          x: location.x,
+          y: location.y + (isExpansionNorthBlocked ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize - ((isExpansionNorthBlocked ? 1 : 0) + (isExpansionSouthBlocked ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
+          type: location.pathWest !== null && location.pathWest.state !== 'open' ? location.pathWest.state : 'wall-left'
+        });
+      }
+
+      if (location.pathEast === null || location.pathEast.state !== 'open') {
+        const isExpansionNorthBlocked = isTopRightCornerOccupied || location.pathNorth === null;
+        const isExpansionSouthBlocked = isBottomRightCornerOccupied || location.pathSouth === null;
+        tiles.push({
+          x: location.x + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          y: location.y + (isExpansionNorthBlocked ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
+          width: GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize - ((isExpansionNorthBlocked ? 1 : 0) + (isExpansionSouthBlocked ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
+          type: location.pathEast !== null && location.pathEast.state !== 'open' ? location.pathEast.state : 'wall-right'
+        });
+      }
+
+      if (location.pathNorth === null || location.pathNorth.state !== 'open') {
+        const isExpansionWestBlocked = isTopLeftCornerOccupied || location.pathWest === null;
+        const isExpansionEastBlocked = isTopRightCornerOccupied || location.pathEast === null;
+        tiles.push({
+          x: location.x + (isExpansionWestBlocked ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
+          y: location.y,
+          width: GameService.tileSize - ((isExpansionWestBlocked ? 1 : 0) + (isExpansionEastBlocked ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          type: location.pathNorth !== null && location.pathNorth.state !== 'open' ? location.pathNorth.state : 'wall-top'
+        });
+      }
+
+      if (location.pathSouth === null || location.pathSouth.state !== 'open') {
+        const isExpansionWestBlocked = isBottomLeftCornerOccupied || location.pathWest === null;
+        const isExpansionEastBlocked = isBottomRightCornerOccupied || location.pathEast === null;
+        tiles.push({
+          x: location.x + (isExpansionWestBlocked ? 1 : 0) * GameService.tileSize / GameService.wallsPerTile,
+          y: location.y + (1 - 1 / GameService.wallsPerTile) * GameService.tileSize,
+          width: GameService.tileSize - ((isExpansionWestBlocked ? 1 : 0) + (isExpansionEastBlocked ? 1 : 0)) * GameService.tileSize / GameService.wallsPerTile,
+          height: GameService.tileSize / GameService.wallsPerTile,
+          type: location.pathSouth !== null && location.pathSouth.state !== 'open' ? location.pathSouth.state : 'wall-bottom'
         });
       }
     });
@@ -407,18 +450,20 @@ interface ILocationData {
   x: number | undefined;
   y: number | undefined;
 
-  hasPathWest: boolean;
-  locationWest: ILocationData | null;
-
-  hasPathEast: boolean;
-  locationEast: ILocationData | null;
-
-  hasPathNorth: boolean;
-  locationNorth: ILocationData | null;
-
-  hasPathSouth: boolean;
-  locationSouth: ILocationData | null;
+  pathWest: IPathData | null;
+  pathEast: IPathData | null;
+  pathNorth: IPathData | null;
+  pathSouth: IPathData | null;
 }
+
+interface IPathData {
+  state: PathState;
+  location: ILocationData | null;
+}
+
+type Blockade = 'force-wall' | 'lock' | 'stone' | 'spirits';
+
+type PathState = 'open' | Blockade;
 
 export interface IGame {
   world: IWorld;
@@ -463,6 +508,7 @@ export type TileType =
   'floor' |
   'wall-left' | 'wall-right' | 'wall-top' | 'wall-bottom' |
   'wall-corner-inner-left-bottom' | 'wall-corner-inner-left-top' | 'wall-corner-inner-right-bottom' | 'wall-corner-inner-right-top' |
-  'wall-corner-outer-left-bottom' | 'wall-corner-outer-left-top' | 'wall-corner-outer-right-bottom' | 'wall-corner-outer-right-top';
+  'wall-corner-outer-left-bottom' | 'wall-corner-outer-left-top' | 'wall-corner-outer-right-bottom' | 'wall-corner-outer-right-top' |
+  Blockade;
 
 type PathType = 'west' | 'east' | 'north' | 'south' | 'portal';

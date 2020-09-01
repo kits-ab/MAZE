@@ -150,7 +150,7 @@ namespace MAZE.Api
             var obstacles = new List<Obstacle>();
             foreach (var obstacleInformation in pathIdsBlockedByObstacle)
             {
-                obstacles.Add(new Obstacle(obstacleCounter++, ObstacleType.ForceField, obstacleInformation.Value));
+                obstacles.Add(new Obstacle(obstacleCounter++, obstacleInformation.Key.ObstacleType, obstacleInformation.Value));
             }
 
             yield return new WorldLoaded(worldId, locations.Values, paths, obstacles);
