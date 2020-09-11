@@ -10,9 +10,6 @@
     <Content Include="../MAZE.Specification/openapi.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Worlds\Castle.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +28,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MAZE.Persisting\MAZE.Persisting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Worlds\Castle.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Worlds\Test.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 

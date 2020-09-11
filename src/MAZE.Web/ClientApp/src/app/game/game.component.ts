@@ -35,8 +35,8 @@ export class GameComponent implements OnInit {
       const viewHeight = svgElement.getBoundingClientRect().height;
 
       const scale = Math.min(viewWidth / game.world.width, viewHeight / game.world.height);
-      const offsetX = (viewWidth - game.world.width * scale) / 2;
-      const offsetY = (viewHeight - game.world.height * scale) / 2;
+      const offsetX = (viewWidth - game.world.width * scale) / 2 - game.world.x * scale;
+      const offsetY = (viewHeight - game.world.height * scale) / 2 - game.world.y * scale;
 
       svg.select<SVGGElement>('.game')
         .style('transform', `translate(${offsetX}px, ${offsetY}px) scale(${scale})`);

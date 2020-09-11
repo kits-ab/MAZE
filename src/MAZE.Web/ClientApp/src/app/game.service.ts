@@ -8,6 +8,7 @@ export class GameService {
   private static readonly wallsPerTile = 6;
 
   private readonly gameEventService = new GameEventService(this.gameId);
+  private originLocationId: LocationId | null = null;
 
   constructor(private readonly gameId: GameId, private readonly gamesApi: GamesService) {
   }
@@ -86,7 +87,10 @@ export class GameService {
   }
 
   private buildLocationData(locations: Location[], paths: Path[], obstacles: Obstacle[]): ILocationData[] {
-    const originLocationId = locations[0].id;
+    if (this.originLocationId === null) {
+      this.originLocationId = locations[0].id;
+    }
+    const originLocationId: LocationId = this.originLocationId;
     const locationData = new Map<LocationId, ILocationData>(locations.map<[LocationId, ILocationData]>(location => [
       location.id,
       {

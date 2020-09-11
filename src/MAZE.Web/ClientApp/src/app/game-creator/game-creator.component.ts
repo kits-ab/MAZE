@@ -21,7 +21,7 @@ export class GameCreatorComponent implements OnInit {
     };
     this.gameApi.createGame(newGame).subscribe(createdGame => {
       if (this.activatedRoute.snapshot.params.withControl) {
-        this.router.navigate(['/gameWithControl', createdGame.id, 'FallenMaster']);
+        this.router.navigate(['/gameWithControl', createdGame.id, 'Anonymous']);
       }
       else {
         this.router.navigate(['/game', createdGame.id ]);
