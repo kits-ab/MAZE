@@ -12,7 +12,7 @@ properties:
         value: True
       - name: EVENTSTORE_MEM_DB
         value: False
-      image: eventstore/eventstore
+      image: eventstore/eventstore:20.6.0-bionic
       ports:
       - port: 80
       - port: 1113
